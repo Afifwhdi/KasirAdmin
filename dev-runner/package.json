@@ -1,0 +1,10 @@
+{
+  "name": "dilla-runner",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently \"cd ../filament-admin && php artisan serve --port=8000\" \"cd ../nest-api && npm run start:dev\" \"cd ../pos-frontend && npm run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}
