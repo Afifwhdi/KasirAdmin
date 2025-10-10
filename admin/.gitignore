@@ -1,0 +1,14 @@
+/vendor
+/node_modules
+/public/storage
+/storage/*.key
+.env
+.env.*.php
+.phpunit.result.cache
+/public/hot
+/public/mix-manifest.json
+/storage/logs/*
+/bootstrap/cache/*.php
+
+.DS_Store
+Thumbs.db
