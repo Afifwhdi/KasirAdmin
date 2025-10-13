@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, EyeOff, Loader2, ShoppingCart } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { API_CONFIG, API_ENDPOINTS } from "@/config/api";
 
@@ -105,13 +105,8 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
-          {/* Logo/Icon */}
-          <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-2">
-            <ShoppingCart className="w-8 h-8 text-primary-foreground" />
-          </div>
-          
           <div>
-            <CardTitle className="text-3xl font-bold">Warung POS</CardTitle>
+            <CardTitle className="text-3xl font-bold">POS</CardTitle>
             <CardDescription className="text-base mt-2">
               Masuk untuk mengakses sistem kasir
             </CardDescription>
