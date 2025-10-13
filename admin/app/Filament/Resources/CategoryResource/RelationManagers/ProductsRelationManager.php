@@ -8,7 +8,7 @@ use App\Models\Product;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+
 use Filament\Resources\RelationManagers\RelationManager;
 
 class ProductsRelationManager extends RelationManager

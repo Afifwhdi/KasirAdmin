@@ -2,14 +2,13 @@
 
 namespace App\Filament\Resources;
 
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Infolists\Infolist;
 use Filament\Support\Exceptions\Halt;
 use Filament\Support\Enums\FontWeight;
 use Filament\Notifications\Notification;
 use Filament\Infolists\Components\TextEntry;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
+
 use Filament\Resources\Resource;
 use App\Filament\Resources\TransactionResource\Pages;
 use App\Filament\Resources\TransactionResource\RelationManagers\TransactionItemsRelationManager;
@@ -30,17 +29,15 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\TrashedFilter;
+
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\RestoreAction;
-use Filament\Tables\Actions\ForceDeleteAction;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Actions\ForceDeleteBulkAction;
-use Filament\Tables\Actions\RestoreBulkAction;
 
-class TransactionResource extends Resource implements HasShieldPermissions
+use Filament\Tables\Actions\DeleteBulkAction;
+
+
+class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
@@ -48,22 +45,6 @@ class TransactionResource extends Resource implements HasShieldPermissions
     protected static ?string $pluralLabel = 'Transaksi';
     protected static ?string $navigationGroup = 'Menejemen keuangan';
     protected static ?int $navigationSort = 3;
-
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view',
-            'view_any',
-            'create',
-            'update',
-            'delete',
-            'delete_any',
-            'restore',
-            'restore_any',
-            'force_delete',
-            'force_delete_any',
-        ];
-    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -73,7 +54,6 @@ class TransactionResource extends Resource implements HasShieldPermissions
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->withoutGlobalScopes([SoftDeletingScope::class])
             ->orderBy('created_at', 'desc');
     }
 
@@ -95,6 +75,15 @@ class TransactionResource extends Resource implements HasShieldPermissions
                 ]),
 
                 Group::make()->schema([
+                    Section::make('Informasi Customer')->schema([
+                        TextInput::make('name')
+                            ->label('Nama Customer')
+                            ->placeholder('Kosongkan untuk customer umum')
+                            ->maxLength(255),
+                    ])
+                ]),
+
+                Group::make()->schema([
                     Section::make('Pembayaran')->schema([
                         Select::make('payment_method_id')
                             ->relationship('paymentMethod', 'name')
@@ -105,7 +94,7 @@ class TransactionResource extends Resource implements HasShieldPermissions
                                 $set('is_cash', $paymentMethod?->is_cash ?? false);
 
                                 if (!$paymentMethod?->is_cash) {
-                                    $set('change', 0);
+                                    $set('change_amount', 0);
                                     $set('cash_received', $get('total'));
                                 }
                             })
@@ -114,7 +103,7 @@ class TransactionResource extends Resource implements HasShieldPermissions
 
                                 if (!$paymentMethod?->is_cash) {
                                     $set('cash_received', $get('total'));
-                                    $set('change', 0);
+                                    $set('change_amount', 0);
                                 }
 
                                 $set('is_cash', $paymentMethod?->is_cash ?? false);
@@ -127,7 +116,7 @@ class TransactionResource extends Resource implements HasShieldPermissions
                             ->readOnly(fn(Forms\Get $get) => $get('is_cash') == false)
                             ->afterStateUpdated(fn(Forms\Set $set, Forms\Get $get, $state)
                             => self::updateExcangePaid($get, $set)),
-                        TextInput::make('change')
+                        TextInput::make('change_amount')
                             ->numeric()
                             ->label('Kembalian')
                             ->readOnly(),
@@ -163,10 +152,14 @@ class TransactionResource extends Resource implements HasShieldPermissions
                     ->copyMessage('#No.Transaksi copied')
                     ->copyMessageDuration(1500)
                     ->searchable(),
-                TextColumn::make('total')->label('Total Harga')->prefix('Rp ')->numeric(),
-                TextColumn::make('cash_received')->label('Nominal Bayar')->prefix('Rp ')->numeric(),
-                TextColumn::make('change')->label('Kembalian')->prefix('Rp ')->numeric(),
-                TextColumn::make('created_at')->label('Transaksi dibuat')->dateTime()->sortable(),
+                TextColumn::make('name')
+                    ->label('Nama Customer')
+                    ->default('Umum')
+                    ->searchable(),
+                TextColumn::make('total')->label('Total Harga')->prefix('Rp ')->numeric()->sortable(),
+                TextColumn::make('cash_received')->label('Nominal Bayar')->prefix('Rp ')->numeric()->sortable(),
+                TextColumn::make('change_amount')->label('Kembalian')->prefix('Rp ')->numeric()->sortable(),
+                TextColumn::make('created_at')->label('Transaksi dibuat')->dateTime('d M Y, H:i')->sortable()->toggleable(),
                 BadgeColumn::make('paymentMethod.name')->label('Pembayaran'),
                 BadgeColumn::make('status')
                     ->label('Status')
@@ -188,10 +181,7 @@ class TransactionResource extends Resource implements HasShieldPermissions
                             ->when($data['start_date'], fn($q, $date) => $q->whereDate('created_at', '>=', $date))
                             ->when($data['end_date'], fn($q, $date) => $q->whereDate('created_at', '<=', $date));
                     }),
-                TrashedFilter::make()
-                    ->placeholder('Tanpa return pelanggan')
-                    ->trueLabel('Beserta return pelanggan')
-                    ->falseLabel('Hanya return pelanggan'),
+
                 \Filament\Tables\Filters\SelectFilter::make('status')
                     ->label('Status Transaksi')
                     ->options([
@@ -202,6 +192,22 @@ class TransactionResource extends Resource implements HasShieldPermissions
                     ]),
             ], layout: Tables\Enums\FiltersLayout::Modal)
             ->actions([
+                Action::make('pay')
+                    ->label('Bayar')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Konfirmasi Pembayaran')
+                    ->modalDescription(fn($record) => 'Konfirmasi bahwa pembayaran untuk transaksi ' . $record->transaction_number . ' sudah diterima. Status akan berubah menjadi Paid.')
+                    ->visible(fn($record) => $record->status === 'pending')
+                    ->action(function($record) {
+                        $record->update(['status' => 'paid']);
+                        Notification::make()
+                            ->title('Pembayaran berhasil dicatat')
+                            ->success()
+                            ->send();
+                    }),
+
                 Action::make('cancel')
                     ->label('Batalkan')
                     ->icon('heroicon-o-x-circle')
@@ -215,18 +221,54 @@ class TransactionResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('gray')
                     ->requiresConfirmation()
+                    ->modalHeading('Refund Transaksi')
+                    ->modalDescription(fn($record) => 'Apakah Anda yakin ingin merefund transaksi ' . $record->transaction_number . '? Stock produk akan dikembalikan.')
                     ->visible(fn($record) => $record->status === 'paid')
-                    ->action(fn($record) => $record->update(['status' => 'refunded'])),
+                    ->action(function($record) {
+                        // Restore stock for each transaction item
+                        foreach ($record->transactionItems as $item) {
+                            $product = Product::find($item->product_id);
+                            if ($product) {
+                                $product->adjustStock($item->quantity, 'refund', $record->uuid);
+                            }
+                        }
+                        
+                        // Update transaction status
+                        $record->update(['status' => 'refunded']);
+                        
+                        Notification::make()
+                            ->title('Transaksi berhasil direfund')
+                            ->body('Stock produk telah dikembalikan.')
+                            ->success()
+                            ->send();
+                    }),
 
                 ViewAction::make()->color('warning')->label('Detail'),
-                DeleteAction::make()->label('Return pelanggan'),
-                ForceDeleteAction::make()->visible()->label('Hapus Permanen'),
-                RestoreAction::make(),
+                DeleteAction::make()->label('Hapus'),
             ])
             ->bulkActions([
-                DeleteBulkAction::make()->label('Return Pelanggan')->button(),
-                ForceDeleteBulkAction::make()->visible()->label('Hapus Permanen')->button(),
-                RestoreBulkAction::make(),
+                DeleteBulkAction::make()->label('Hapus')->button(),
+
+                Tables\Actions\BulkAction::make('bulkPay')
+                    ->label('Bayar Transaksi')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Konfirmasi Pembayaran')
+                    ->modalDescription('Konfirmasi bahwa pembayaran untuk transaksi yang dipilih sudah diterima.')
+                    ->action(function ($records) {
+                        $paidCount = 0;
+                        foreach ($records as $record) {
+                            if ($record->status === 'pending') {
+                                $record->update(['status' => 'paid']);
+                                $paidCount++;
+                            }
+                        }
+                        Notification::make()
+                            ->title("$paidCount transaksi berhasil dibayar")
+                            ->success()
+                            ->send();
+                    }),
 
                 Tables\Actions\BulkAction::make('bulkCancel')
                     ->label('Batalkan Transaksi')
@@ -250,14 +292,27 @@ class TransactionResource extends Resource implements HasShieldPermissions
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('gray')
                     ->requiresConfirmation()
+                    ->modalHeading('Refund Transaksi Terpilih')
+                    ->modalDescription('Apakah Anda yakin ingin merefund transaksi yang dipilih? Stock produk akan dikembalikan.')
                     ->action(function ($records) {
+                        $refundedCount = 0;
                         foreach ($records as $record) {
                             if ($record->status === 'paid') {
+                                // Restore stock for each transaction item
+                                foreach ($record->transactionItems as $item) {
+                                    $product = Product::find($item->product_id);
+                                    if ($product) {
+                                        $product->adjustStock($item->quantity, 'refund', $record->uuid);
+                                    }
+                                }
+                                
                                 $record->update(['status' => 'refunded']);
+                                $refundedCount++;
                             }
                         }
                         Notification::make()
-                            ->title('Transaksi berhasil direfund')
+                            ->title("$refundedCount transaksi berhasil direfund")
+                            ->body('Stock produk telah dikembalikan.')
                             ->success()
                             ->send();
                     }),
@@ -282,7 +337,7 @@ class TransactionResource extends Resource implements HasShieldPermissions
                     ->required()
                     ->options(fn(Forms\Get $get) => Product::query()->pluck('name', 'id'))
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                        $product = Product::withTrashed()->find($state);
+                        $product = Product::find($state);
                         // $set('product_name_snapshot', $product->name ?? '');
                         $set('cost_price', $product->cost_price ?? 0);
                         $set('price', $product->price ?? 0);
@@ -300,7 +355,7 @@ class TransactionResource extends Resource implements HasShieldPermissions
                     ->columnSpan(['md' => 5])
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         $id = $get('product_id');
-                        $product = Product::withTrashed()->find($id);
+                        $product = Product::find($id);
                         $quantity = (int) ($get('quantity') ?? 0);
                         $price = (int) ($product->price ?? 0);
                         $costPrice = (int) ($product->cost_price ?? 0);
@@ -328,7 +383,7 @@ class TransactionResource extends Resource implements HasShieldPermissions
 
             ])
             ->mutateRelationshipDataBeforeSaveUsing(function (array $data) {
-                $invalidProducts = collect($data['transactionItems'] ?? [])->filter(fn($item) => !Product::withTrashed()->find($item['product_id']));
+                $invalidProducts = collect($data['transactionItems'] ?? [])->filter(fn($item) => !Product::find($item['product_id']));
                 if ($invalidProducts->isNotEmpty()) {
                     Notification::make()
                         ->title('Tidak dapat menyimpan')
@@ -370,7 +425,7 @@ class TransactionResource extends Resource implements HasShieldPermissions
         $selectedProducts = collect($get('transactionItems'))
             ->filter(fn($item) => !empty($item['product_id']) && !empty($item['quantity']));
         $ids = $selectedProducts->pluck('product_id')->all();
-        $products = Product::withTrashed()->whereIn('id', $ids)->get();
+        $products = Product::whereIn('id', $ids)->get();
         $prices = $products->pluck('price', 'id');
         $total = $selectedProducts->reduce(fn($total, $item) =>
         $total + (($prices[$item['product_id']] ?? 0) * $item['quantity']), 0);
@@ -382,6 +437,6 @@ class TransactionResource extends Resource implements HasShieldPermissions
         $paidAmount = (int) $get('cash_received') ?? 0;
         $totalPrice = (int) $get('total') ?? 0;
         $exchangePaid = $paidAmount - $totalPrice;
-        $set('change', $exchangePaid);
+        $set('change_amount', $exchangePaid);
     }
 }

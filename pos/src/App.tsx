@@ -7,7 +7,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
 import POSPage from "./pages/POSPage";
-import TransactionHistory from "./pages/TransactionHistory";
+import TransactionsPage from "./pages/TransactionsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,7 +32,7 @@ const App = () => (
             }
           >
             <Route index element={<POSPage />} />
-            <Route path="history" element={<TransactionHistory />} />
+            <Route path="history" element={<TransactionsPage />} />
           </Route>
           
           {/* Catch-all */}

@@ -1,22 +1,20 @@
 export class CreateTransactionItemDto {
-  product_id: number;
-  product_name?: string | null;
-  price: number;
-  qty: number;
+  product_id!: number;
+  product_name_snapshot?: string;
+  quantity!: number;
+  price!: number;
   subtotal?: number;
+  cost_price?: number;
+  total_profit?: number;
 }
 
 export class CreateTransactionDto {
-  transaction_number?: string;
-  payment_method_id?: number;
+  payment_method_id!: number;
+  transaction_number!: string;
   name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  notes?: string;
-  total: number;
-  cash_received: number;
-  change: number;
+  total!: number;
+  cash_received!: number;
+  change_amount!: number;
   status?: 'pending' | 'paid' | 'cancelled' | 'refunded';
-  items: CreateTransactionItemDto[];
+  items!: CreateTransactionItemDto[];
 }

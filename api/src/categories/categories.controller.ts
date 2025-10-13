@@ -5,10 +5,6 @@ import { CategoriesService } from './categories.service';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  /**
-   * GET /categories
-   * Output minimalis: hanya id dan name
-   */
   @Get()
   async findAll() {
     const categories = await this.categoriesService.findAll();

@@ -8,12 +8,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Pages\Dashboard as BaseDashboard;
-use BezhanSalleh\FilamentShield\Traits\HasPageShield;
-
 
 class Dashboard extends BaseDashboard
 {
-    use HasPageShield;
     protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
 
     use BaseDashboard\Concerns\HasFiltersForm;

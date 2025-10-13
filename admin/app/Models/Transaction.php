@@ -3,26 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
 class Transaction extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'payment_method_id',
         'transaction_number',
         'name',
-        'email',
-        'phone',
-        'address',
-        'notes',
         'total',
         'status',
         'cash_received',
-        'change',
+        'change_amount',
         'uuid',
         'is_synced',
         'synced_at',

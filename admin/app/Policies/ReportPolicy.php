@@ -15,7 +15,7 @@ class ReportPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_report');
+        return $user->isAdmin();
     }
 
     /**
@@ -23,7 +23,7 @@ class ReportPolicy
      */
     public function view(User $user, Report $report): bool
     {
-        return $user->can('{{ View }}');
+        return $user->isAdmin();
     }
 
     /**
@@ -31,7 +31,7 @@ class ReportPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_report');
+        return $user->isAdmin();
     }
 
     /**
@@ -39,7 +39,7 @@ class ReportPolicy
      */
     public function update(User $user, Report $report): bool
     {
-        return $user->can('update_report');
+        return $user->isAdmin();
     }
 
     /**
@@ -47,7 +47,7 @@ class ReportPolicy
      */
     public function delete(User $user, Report $report): bool
     {
-        return $user->can('{{ Delete }}');
+        return $user->isAdmin();
     }
 
     /**
@@ -55,7 +55,7 @@ class ReportPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_report');
+        return $user->isAdmin();
     }
 
     /**
@@ -63,7 +63,7 @@ class ReportPolicy
      */
     public function forceDelete(User $user, Report $report): bool
     {
-        return $user->can('{{ ForceDelete }}');
+        return $user->isAdmin();
     }
 
     /**
@@ -71,7 +71,7 @@ class ReportPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('{{ ForceDeleteAny }}');
+        return $user->isAdmin();
     }
 
     /**
@@ -79,7 +79,7 @@ class ReportPolicy
      */
     public function restore(User $user, Report $report): bool
     {
-        return $user->can('{{ Restore }}');
+        return $user->isAdmin();
     }
 
     /**
@@ -87,7 +87,7 @@ class ReportPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('{{ RestoreAny }}');
+        return $user->isAdmin();
     }
 
     /**
@@ -95,7 +95,7 @@ class ReportPolicy
      */
     public function replicate(User $user, Report $report): bool
     {
-        return $user->can('{{ Replicate }}');
+        return $user->isAdmin();
     }
 
     /**
@@ -103,6 +103,6 @@ class ReportPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('{{ Reorder }}');
+        return $user->isAdmin();
     }
 }

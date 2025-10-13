@@ -1,4 +1,4 @@
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface CartItemProps {
@@ -8,6 +8,8 @@ interface CartItemProps {
   onIncrease: () => void;
   onDecrease: () => void;
   onRemove: () => void;
+  locked?: boolean;
+  pluWeight?: number;
 }
 
 export const CartItem = ({ 
@@ -16,7 +18,9 @@ export const CartItem = ({
   quantity, 
   onIncrease, 
   onDecrease, 
-  onRemove 
+  onRemove,
+  locked = false,
+  pluWeight
 }: CartItemProps) => {
   const total = price * quantity;
   
@@ -24,7 +28,14 @@ export const CartItem = ({
     <div className="py-3 border-b border-dashed border-border last:border-0">
       {/* Item Header: Name and Remove */}
       <div className="flex items-start justify-between mb-2">
-        <h4 className="font-medium text-sm flex-1">{name}</h4>
+        <div className="flex-1">
+          <h4 className="font-medium text-sm">{name}</h4>
+          {pluWeight && (
+            <span className="text-xs text-muted-foreground">
+              {pluWeight === 1 ? "1 Kg" : pluWeight === 0.25 ? "1/4 Kg" : `${pluWeight} Kg`}
+            </span>
+          )}
+        </div>
         <Button
           size="icon"
           variant="ghost"
@@ -59,8 +70,14 @@ export const CartItem = ({
               variant="ghost"
               className="h-6 w-6"
               onClick={onIncrease}
+              disabled={locked}
+              title={locked ? "Qty tidak bisa ditambah untuk produk PLU 1/4 Kg" : ""}
             >
-              <Plus className="w-3 h-3" />
+              {locked ? (
+                <Lock className="w-3 h-3 text-muted-foreground" />
+              ) : (
+                <Plus className="w-3 h-3" />
+              )}
             </Button>
           </div>
         </div>

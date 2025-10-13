@@ -10,20 +10,9 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Hash;
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
-
-class UserResource extends Resource implements HasShieldPermissions
+class UserResource extends Resource
 {
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'create',
-            'update',
-            'delete_any',
-        ];
-    }
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user';
@@ -32,30 +21,34 @@ class UserResource extends Resource implements HasShieldPermissions
 
     public static ?int $navigationSort = 7;
 
-
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nama')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
+                    ->label('Email')
                     ->email()
                     ->required()
                     ->maxLength(255),
+                Forms\Components\Select::make('role')
+                    ->label('Peran')
+                    ->options([
+                        'admin' => 'Admin',
+                        'kasir' => 'Kasir',
+                    ])
+                    ->required()
+                    ->default('kasir'),
                 Forms\Components\TextInput::make('password')
+                    ->label('Password')
                     ->password()
                     ->maxLength(255)
                     ->dehydrateStateUsing(fn($state) => Hash::make($state))
                     ->dehydrated(fn($state) => filled($state))
                     ->required(fn(string $context): bool => $context === 'create'),
-                Forms\Components\Select::make('roles')
-                    ->label('Peran')
-                    ->relationship('roles', 'name')
-                    ->preload()
-                    ->searchable(),
-
             ]);
     }
 
@@ -64,16 +57,29 @@ class UserResource extends Resource implements HasShieldPermissions
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nama')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('roles.name')
-                    ->label('Peran'),
                 Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
                     ->searchable(),
+                Tables\Columns\BadgeColumn::make('role')
+                    ->label('Peran')
+                    ->colors([
+                        'success' => 'admin',
+                        'warning' => 'kasir',
+                    ])
+                    ->formatStateUsing(fn(string $state): string => match ($state) {
+                        'admin' => 'Admin',
+                        'kasir' => 'Kasir',
+                        default => $state,
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label('Dibuat')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Diubah')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

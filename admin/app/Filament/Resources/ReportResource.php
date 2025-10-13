@@ -9,20 +9,10 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Filament\Resources\ReportResource\Pages;
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Tables\Actions\Action;
 
-class ReportResource extends Resource implements HasShieldPermissions
+class ReportResource extends Resource
 {
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'create',
-            'update',
-            'delete_any',
-        ];
-    }
 
     public static function getNavigationBadge(): ?string
     {

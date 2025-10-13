@@ -15,7 +15,7 @@ class TransactionPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -23,7 +23,7 @@ class TransactionPolicy
      */
     public function view(User $user, Transaction $transaction): bool
     {
-        return $user->can('view_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -31,7 +31,7 @@ class TransactionPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -39,7 +39,7 @@ class TransactionPolicy
      */
     public function update(User $user, Transaction $transaction): bool
     {
-        return $user->can('update_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -47,7 +47,7 @@ class TransactionPolicy
      */
     public function delete(User $user, Transaction $transaction): bool
     {
-        return $user->can('delete_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -55,7 +55,7 @@ class TransactionPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -63,7 +63,7 @@ class TransactionPolicy
      */
     public function forceDelete(User $user, Transaction $transaction): bool
     {
-        return $user->can('force_delete_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -71,7 +71,7 @@ class TransactionPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -79,7 +79,7 @@ class TransactionPolicy
      */
     public function restore(User $user, Transaction $transaction): bool
     {
-        return $user->can('restore_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -87,7 +87,7 @@ class TransactionPolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_transaction');
+        return $user->isAdmin();
     }
 
     /**
@@ -95,7 +95,7 @@ class TransactionPolicy
      */
     public function replicate(User $user, Transaction $transaction): bool
     {
-        return $user->can('{{ Replicate }}');
+        return $user->isAdmin();
     }
 
     /**
@@ -103,6 +103,6 @@ class TransactionPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('{{ Reorder }}');
+        return $user->isAdmin();
     }
 }

@@ -1,48 +1,36 @@
-// src/services/api.ts
-/**
- * PURE FRONTEND MODE (NO FETCH)
- * Semua data disimulasikan langsung dari frontend
- */
+import { API_CONFIG, API_ENDPOINTS } from "@/config/api";
 
 export const api = {
   products: {
     getAll: async () => {
-      // simulasi delay biar kayak loading
-      await new Promise((r) => setTimeout(r, 400));
-
-      // data dummy
-      return [
-        {
-          id: 1,
-          name: "Kopi Susu Gula Aren",
-          category: "Minuman",
-          price: 25000,
-        },
-        { id: 2, name: "Teh Botol Sosro", category: "Minuman", price: 5000 },
-        {
-          id: 3,
-          name: "Roti Tawar Serbaguna",
-          category: "Makanan",
-          price: 18000,
-        },
-        {
-          id: 4,
-          name: "Sabun Lifebuoy",
-          category: "Kebutuhan Rumah",
-          price: 7500,
-        },
-      ];
+      const res = await fetch(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PRODUCTS}`
+      );
+      if (!res.ok) throw new Error("Gagal memuat produk");
+      const json = await res.json();
+      return json.data ?? [];
     },
+  },
 
-    getById: async (id: number) => {
-      await new Promise((r) => setTimeout(r, 200));
-      const products = [
-        { id: 1, name: "Kopi Susu Gula Aren", price: 25000 },
-        { id: 2, name: "Teh Botol Sosro", price: 5000 },
-        { id: 3, name: "Roti Tawar Serbaguna", price: 18000 },
-        { id: 4, name: "Sabun Lifebuoy", price: 7500 },
-      ];
-      return products.find((p) => p.id === id) || null;
+  categories: {
+    getAll: async () => {
+      const res = await fetch(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.CATEGORIES}`
+      );
+      if (!res.ok) throw new Error("Gagal memuat kategori");
+      const json = await res.json();
+      return json.data ?? [];
+    },
+  },
+
+  transactions: {
+    getAll: async () => {
+      const res = await fetch(
+        `${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`
+      );
+      if (!res.ok) throw new Error("Gagal memuat transaksi");
+      const json = await res.json();
+      return json.data ?? [];
     },
   },
 };

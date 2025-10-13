@@ -13,19 +13,9 @@ use Filament\Resources\Resource;
 use App\Services\InventoryLabelService;
 use Filament\Forms\Components\Repeater;
 use App\Filament\Resources\InventoryResource\Pages;
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
-class InventoryResource extends Resource implements HasShieldPermissions
+class InventoryResource extends Resource
 {
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'create',
-            'update',
-            'delete_any',
-        ];
-    }
 
     protected static ?string $model = Inventory::class;
 

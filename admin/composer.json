@@ -8,7 +8,6 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
-        "bezhansalleh/filament-shield": "^3.3",
         "filament/filament": "3.3",
         "flowframe/laravel-trend": "^0.4.0",
         "laravel/framework": "^12.0",
@@ -18,8 +17,7 @@
         "maatwebsite/excel": "^3.1",
         "mike42/escpos-php": "^4.0",
         "milon/barcode": "^12.0",
-        "predis/predis": "^3.2",
-        "spatie/laravel-permission": "^6.10"
+        "predis/predis": "^3.2"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.15",

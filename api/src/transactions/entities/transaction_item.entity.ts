@@ -9,35 +9,35 @@ import {
 @Entity('transaction_items')
 export class TransactionItem {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
-  id: number;
+  id!: number;
 
   @Column({ type: 'bigint', unsigned: true })
-  transaction_id: number;
+  transaction_id!: number;
 
   @Column({ type: 'bigint', unsigned: true })
-  product_id: number;
+  product_id!: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  product_name_snapshot: string | null;
+  product_name_snapshot!: string | null;
 
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  quantity: string;
-
-  @Column({ type: 'int', unsigned: true })
-  price: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  quantity!: number;
 
   @Column({ type: 'int', unsigned: true, default: 0 })
-  subtotal: number;
+  price!: number;
 
-  @Column({ type: 'int', unsigned: true })
-  cost_price: number;
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  subtotal!: number;
 
-  @Column({ type: 'int', unsigned: true })
-  total_profit: number;
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  cost_price!: number;
+
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  total_profit!: number;
 
   @CreateDateColumn({ type: 'timestamp', nullable: true })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
-  updated_at: Date;
+  updated_at!: Date;
 }

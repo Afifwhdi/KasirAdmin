@@ -6,21 +6,22 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff, Loader2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
+import { API_CONFIG, API_ENDPOINTS } from "@/config/api";
 
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
   });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.username || !formData.password) {
-      toast.error("Username dan password harus diisi!", {
+    if (!formData.email || !formData.password) {
+      toast.error("Email dan password harus diisi!", {
         style: {
           background: '#ef4444',
           color: 'white',
@@ -33,13 +34,27 @@ const Login = () => {
 
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      // Simple auth check (in production, this should call your API)
-      if (formData.username === "admin" && formData.password === "admin") {
-        // Store auth token/session
+    try {
+      // Call API login
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH_LOGIN}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        // Store user data
         localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("username", formData.username);
+        localStorage.setItem("userId", result.data.id.toString());
+        localStorage.setItem("username", result.data.name);
+        localStorage.setItem("userEmail", result.data.email);
         
         toast.success("Login berhasil!", {
           icon: "✓",
@@ -55,7 +70,7 @@ const Login = () => {
           navigate("/");
         }, 500);
       } else {
-        toast.error("Username atau password salah!", {
+        toast.error(result.message || "Login gagal!", {
           style: {
             background: '#ef4444',
             color: 'white',
@@ -65,7 +80,18 @@ const Login = () => {
         });
         setIsLoading(false);
       }
-    }, 1000);
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error("Gagal terhubung ke server. Pastikan API berjalan.", {
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+        duration: 3000,
+      });
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -94,18 +120,18 @@ const Login = () => {
 
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
-            {/* Username Field */}
+            {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="username"
-                type="text"
-                placeholder="Masukkan username"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                id="email"
+                type="email"
+                placeholder="Masukkan email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 onKeyDown={handleKeyDown}
                 disabled={isLoading}
-                autoComplete="username"
+                autoComplete="email"
                 autoFocus
               />
             </div>
@@ -155,17 +181,6 @@ const Login = () => {
                 "Masuk"
               )}
             </Button>
-
-            {/* Demo Credentials Info */}
-            <div className="mt-6 p-3 bg-secondary/50 rounded-lg text-sm">
-              <p className="font-medium mb-1">Demo Login:</p>
-              <p className="text-muted-foreground">
-                Username: <span className="font-mono font-semibold">admin</span>
-              </p>
-              <p className="text-muted-foreground">
-                Password: <span className="font-mono font-semibold">admin</span>
-              </p>
-            </div>
           </form>
         </CardContent>
       </Card>

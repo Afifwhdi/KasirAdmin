@@ -16,19 +16,9 @@ use App\Services\CashFlowLabelService;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\CashFlowResource\Pages;
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
-class CashFlowResource extends Resource implements HasShieldPermissions
+class CashFlowResource extends Resource
 {
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'create',
-            'update',
-            'delete_any',
-        ];
-    }
 
     protected static ?string $model = CashFlow::class;
 

@@ -3,63 +3,61 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { Category } from 'src/categories/entities/category.entity';
 
 @Entity('products')
 export class Product {
   @PrimaryGeneratedColumn({ type: 'bigint', unsigned: true })
-  id: number;
+  id!: number;
 
   @Column({ type: 'bigint', unsigned: true })
-  category_id: number;
+  category_id!: number;
 
-  @ManyToOne(() => Category, (category) => category.products, { eager: false })
+  @ManyToOne(() => Category, (category) => category.products)
   @JoinColumn({ name: 'category_id' })
-  category: Category;
+  category!: Category;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  name!: string;
 
-  // Ganti dari string -> number (lebih cocok untuk operasi stok)
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  stock: number;
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  stock!: number;
 
-  @Column({ type: 'int', unsigned: true })
-  cost_price: number;
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  cost_price!: number;
 
-  @Column({ type: 'int', unsigned: true })
-  price: number;
+  @Column({ type: 'int', unsigned: true, default: 0 })
+  price!: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  image: string | null;
+  image!: string | null;
 
-  @Column({ type: 'varchar', length: 191, nullable: true })
-  sku: string | null;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  sku!: string | null;
 
-  @Column({ type: 'varchar', length: 191, nullable: true })
-  barcode: string | null;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  barcode!: string | null;
 
-  // Gunakan boolean tapi tetap disimpan tinyint di DB
-  @Column({ type: 'tinyint', width: 1, default: 0 })
-  is_plu_enabled: boolean;
+  @Column({ type: 'boolean', default: false })
+  is_plu_enabled!: boolean;
 
-  @Column({ type: 'text', nullable: true })
-  description: string | null;
+  @Column({ type: 'boolean', default: true })
+  is_active!: boolean;
 
-  @Column({ type: 'tinyint', width: 1, default: 1 })
-  is_active: boolean;
+  @CreateDateColumn({ type: 'timestamp' })
+  created_at!: Date;
 
-  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
-  created_at: Date;
+  @UpdateDateColumn({ type: 'timestamp' })
+  updated_at!: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', name: 'updated_at' })
-  updated_at: Date;
+  @Column({ type: 'bigint', unsigned: true, default: 1 })
+  version!: number;
 
-  @DeleteDateColumn({ type: 'timestamp', name: 'deleted_at', nullable: true })
-  deleted_at: Date | null;
+  @DeleteDateColumn({ type: 'timestamp', nullable: true })
+  deleted_at!: Date | null;
 }

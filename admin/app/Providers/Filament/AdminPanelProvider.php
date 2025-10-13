@@ -25,7 +25,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->topNavigation()
+            ->sidebarCollapsibleOnDesktop()
             ->colors(['primary' => '#1E93AB',])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
@@ -42,14 +42,13 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([Authenticate::class,])
+            ->authMiddleware([
+                Authenticate::class,
+                \App\Http\Middleware\BlockKasirFromAdmin::class,
+            ])
             ->userMenuItems(['logout' => MenuItem::make()->label('Log out')->color('danger'),])
             ->topbar(!request()->is('pos*'))
             ->navigation(!request()->is('pos*'))
-            ->sidebarFullyCollapsibleOnDesktop()
-            ->font('inter')
-            ->plugins([
-                \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
-            ]);
+            ->font('inter');
     }
 }

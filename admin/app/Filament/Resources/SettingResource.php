@@ -10,20 +10,9 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Filament\Resources\SettingResource\Pages;
-use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 
-
-class SettingResource extends Resource implements HasShieldPermissions
+class SettingResource extends Resource
 {
-    public static function getPermissionPrefixes(): array
-    {
-        return [
-            'view_any',
-            'create',
-            'update',
-            'delete_any',
-        ];
-    }
 
     protected static ?string $model = Setting::class;
 
@@ -61,17 +50,17 @@ class SettingResource extends Resource implements HasShieldPermissions
                     ->required()
                     ->label('Tipe Print')
                     ->options([
-                        0 => 'Kabel (Server Local)',
-                        1 => 'Bluetooth'
+                        0 => 'Lokal (USB/Kabel/Network)',
+                        1 => 'Bluetooth (Belum Paired)'
                     ])
                     ->grouped()
-                    ->helperText('Pastikan setiap masuk halaman kasir sambungkan bluetooth terlebih dahulu')
+                    ->helperText('Pilih "Lokal" jika printer sudah terhubung di Windows (USB/Bluetooth paired). Pilih "Bluetooth" hanya jika ingin pair printer baru.')
                     ->live(),
                 Forms\Components\TextInput::make('name_printer_local')
                     ->maxLength(255)
-                    ->label('Nama Printer (Khusus untuk kabel)')
-                    ->helperText('Samakan dengan nama printer yang anda gunakan dan sudah terdaftar atau terhubung di server yang sama. Contoh: Epson T20')
-                    ->hidden(fn (Get $get) => $get('print_via_bluetooth') == true), // Disembunyikan jika print_via_mobile bernilai true
+                    ->label('Nama Printer')
+                    ->helperText('Masukkan nama printer yang muncul di "Printers & Scanners" Windows. Contoh: "Epson TM-T20II", "POS-80", "Bluetooth Printer". Untuk printer Bluetooth yang sudah paired, cek nama di Settings Windows → Printers & Scanners.')
+                    ->placeholder('Contoh: Epson TM-T20II'),
                 Forms\Components\FileUpload::make('logo')
                     ->image()
                     ->required()

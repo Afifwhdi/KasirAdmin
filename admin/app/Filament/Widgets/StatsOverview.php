@@ -41,7 +41,7 @@ class StatsOverview extends BaseWidget
             };
         }
 
-        $dataPriceOrder = Transaction::whereBetween('created_at', [$startDate, $endDate])->get();
+        $dataPriceOrder = Transaction::where('status', 'paid')->whereBetween('created_at', [$startDate, $endDate])->get();
         $dataPriceExpense = CashFlow::where('type', 'expense')->whereBetween('created_at', [$startDate, $endDate])->get();
         $dataPriceInFLow = CashFlow::where('type', 'income')->whereBetween('created_at', [$startDate, $endDate])->get();
         

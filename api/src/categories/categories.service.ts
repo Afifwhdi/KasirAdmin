@@ -15,7 +15,6 @@ export class CategoriesService {
    */
   findAll() {
     return this.categoryRepo.find({
-      where: { deleted_at: IsNull() },
       order: { id: 'ASC' },
     });
   }

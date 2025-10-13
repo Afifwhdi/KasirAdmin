@@ -84,8 +84,10 @@ export const PaymentModal = ({ open, onClose, total, orderNumber, onComplete }: 
             <Input
               id="customer"
               value={customerName}
-              disabled
-              className="mt-1.5 bg-secondary/50"
+              onChange={(e) => setCustomerName(e.target.value)}
+              disabled={paymentMethod === "cash"}
+              className={`mt-1.5 ${paymentMethod === "cash" ? "bg-secondary/50" : ""}`}
+              placeholder={paymentMethod === "credit" ? "Masukkan nama customer..." : "Umum"}
             />
           </div>
           

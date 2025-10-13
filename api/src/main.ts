@@ -3,7 +3,7 @@ import { Logger, LogLevel } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const logLevels: LogLevel[] = ['error', 'warn'];
+  const logLevels: LogLevel[] = ['error', 'warn', 'log'];
   const app = await NestFactory.create(AppModule, { logger: logLevels });
 
   const corsOrigins = (process.env.CORS_ORIGIN ?? '')
