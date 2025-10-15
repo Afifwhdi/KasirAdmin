@@ -1,9 +1,0 @@
-{
-  "scripts": {
-    "dev": "concurrently --names \"API,POS,ADMIN\" --prefix-colors \"cyan,magenta,green\" \"npm run api\" \"npm run pos\" \"npm run admin\" \"npm run open\"",
-    "api": "cd ../api && npm run start:dev -- --log-level=error",
-    "pos": "cd ../pos && npm run dev",
-    "admin": "cd ../admin && php artisan serve",
-    "open": "node open-browser.js"
-  }
-}

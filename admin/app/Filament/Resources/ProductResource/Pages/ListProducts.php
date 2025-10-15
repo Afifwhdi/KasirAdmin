@@ -5,7 +5,7 @@ namespace App\Filament\Resources\ProductResource\Pages;
 use Filament\Actions;
 use App\Models\Product;
 use Filament\Actions\Action;
-use App\Imports\ProductImport;
+use App\Imports\ProductsImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Filament\Resources\Components\Tab;
 use Filament\Notifications\Notification;
@@ -74,55 +74,64 @@ class ListProducts extends ListRecords
             Action::make('importCsv')
                 ->label('Import CSV')
                 ->icon('heroicon-o-arrow-up-tray')
+                ->color('success')
                 ->form([
                     FileUpload::make('file')
                         ->label('File CSV')
+                        ->helperText('Format: nama_produk, kategori, harga_modal, harga_jual, stok, min_stok, barcode, aktif, kiloan')
                         ->disk('local')              
                         ->directory('imports')      
                         ->maxSize(10240)             
-                        ->acceptedFileTypes(['text/csv','text/plain','application/vnd.ms-excel'])
+                        ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel', 'application/csv'])
                         ->required(),
                 ])
                 ->action(function (array $data) {
                     try {
                         $uploaded = $data['file'];
+                        $import = new ProductsImport();
 
+                        // Handle uploaded file
                         if (is_object($uploaded) && (
                                 is_a($uploaded, \Illuminate\Http\UploadedFile::class) ||
                                 class_exists('\Livewire\Features\SupportFileUploads\TemporaryUploadedFile') &&
                                 is_a($uploaded, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile::class)
                             )) {
-
-                            Excel::import(new ProductImport, $uploaded);
-
-                            Notification::make()
-                                ->title('Import berhasil')
-                                ->body('Data produk dari CSV sudah dimasukkan/diupdate.')
-                                ->success()
-                                ->send();
-
-                            return;
-                        }
-
-                        if (is_string($uploaded)) {
+                            Excel::import($import, $uploaded);
+                        } elseif (is_string($uploaded)) {
                             $fullPath = Storage::disk('local')->path(ltrim($uploaded, '/'));
-
                             if (! file_exists($fullPath)) {
-                                throw new \RuntimeException('File tidak ditemukan: '.$fullPath);
+                                throw new \RuntimeException('File tidak ditemukan: ' . $fullPath);
                             }
-
-                            Excel::import(new ProductImport, $fullPath);
-
-                            Notification::make()
-                                ->title('Import berhasil')
-                                ->body('Data produk dari CSV sudah dimasukkan/diupdate.')
-                                ->success()
-                                ->send();
-
-                            return;
+                            Excel::import($import, $fullPath);
+                        } else {
+                            throw new \RuntimeException('Tipe data file tidak dikenali untuk import.');
                         }
 
-                        throw new \RuntimeException('Tipe data file tidak dikenali untuk import.');
+                        // Get import summary
+                        $summary = $import->getSummary();
+
+                        // Show notification with summary
+                        if ($summary['failed'] > 0) {
+                            Notification::make()
+                                ->title('Import selesai dengan error')
+                                ->body("Berhasil: {$summary['success']}, Gagal: {$summary['failed']}")
+                                ->warning()
+                                ->duration(10000)
+                                ->send();
+
+                            // Log errors
+                            foreach ($summary['errors'] as $error) {
+                                logger()->warning('Import error: ' . $error);
+                            }
+                        } else {
+                            Notification::make()
+                                ->title('Import berhasil!')
+                                ->body("{$summary['success']} produk berhasil diimport")
+                                ->success()
+                                ->send();
+                        }
+
+                        return;
                     } catch (\Throwable $e) {
                         Notification::make()
                             ->title('Import gagal')

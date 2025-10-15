@@ -14,6 +14,7 @@ class Product extends Model
         'category_id',
         'name',
         'stock',
+        'min_stock',
         'cost_price',
         'price',
         'image',

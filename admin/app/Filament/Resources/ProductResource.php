@@ -72,6 +72,14 @@ class ProductResource extends Resource
                     ->minValue(0)
                     ->required(),
 
+                Forms\Components\TextInput::make('min_stock')
+                    ->label('Stok Minimum')
+                    ->helperText('Alert akan muncul jika stok kurang dari angka ini')
+                    ->numeric()
+                    ->minValue(1)
+                    ->default(10)
+                    ->required(),
+
                 Forms\Components\TextInput::make('sku')
                     ->label('SKU')
                     ->disabled()
@@ -107,6 +115,14 @@ class ProductResource extends Resource
                     ->label('Stok')
                     ->sortable()
                     ->toggleable()
+                    ->formatStateUsing(fn ($state) => (int) $state)
+                    ->color(fn ($record) => $record->stock <= $record->min_stock ? 'danger' : 'success')
+                    ->badge(),
+
+                Tables\Columns\TextColumn::make('min_stock')
+                    ->label('Min. Stok')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->formatStateUsing(fn ($state) => (int) $state),
 
                 Tables\Columns\TextColumn::make('cost_price')

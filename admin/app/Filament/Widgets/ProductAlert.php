@@ -19,7 +19,7 @@ class ProductAlert extends BaseWidget
     {
         return $table
             ->query(
-                Product::query()->where('stock', '<', 10)->orderBy('stock', 'asc')
+                Product::query()->whereRaw('stock <= min_stock')->orderBy('stock', 'asc')
             )
             ->columns([
                 
@@ -31,7 +31,7 @@ class ProductAlert extends BaseWidget
                     ->getStateUsing(static function ($record): string {
                         if ($record->stock <= 0) {
                             return 'Habis';
-                        } elseif ($record->stock < 10) {
+                        } elseif ($record->stock <= $record->min_stock) {
                             return 'Hampir Habis';
                         }
                         return 'Aman';
@@ -44,6 +44,10 @@ class ProductAlert extends BaseWidget
                             default => 'secondary',
                         };
                     }),
+                Tables\Columns\TextColumn::make('min_stock')
+                    ->label('Min. Stok')
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\BadgeColumn::make('stock')
                     ->label('Stok')
                     ->numeric()
