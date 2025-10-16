@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ReportDownloadController;
 
 Route::get('/', function () {
-    return redirect('/admin/login');
+    return redirect('/admin');
 });
 
 Route::middleware(['auth'])

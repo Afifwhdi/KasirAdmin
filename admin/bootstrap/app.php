@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(HandleCors::class);
+        
+        // Trust all proxies (untuk production sesuaikan dengan proxy yang digunakan)
+        $middleware->trustProxies(at: '*');
+        
+        // Exclude CSRF untuk API routes
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+        ]);
     })
 
     ->withSchedule(function (Schedule $schedule) {

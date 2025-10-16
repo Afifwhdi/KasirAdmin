@@ -1,14 +1,41 @@
+# Dependencies
 /vendor
 /node_modules
-/public/storage
-/storage/*.key
+
+# Environment & Config
 .env
+.env.backup
 .env.*.php
 .phpunit.result.cache
-/public/hot
-/public/mix-manifest.json
-/storage/logs/*
-/bootstrap/cache/*.php
 
+# Laravel
+/public/hot
+/public/storage
+/storage/*.key
+/storage/logs/*
+!/storage/logs/.gitkeep
+
+# Cache
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitkeep
+.phpunit.result.cache
+npm-debug.log
+yarn-error.log
+
+# Filament
+/public/css/filament
+/public/js/filament
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
 .DS_Store
 Thumbs.db
+
+# Build
+/public/build
+/public/mix-manifest.json
+/public/hot

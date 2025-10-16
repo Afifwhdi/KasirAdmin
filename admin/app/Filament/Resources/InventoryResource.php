@@ -19,7 +19,6 @@ class InventoryResource extends Resource
 
     protected static ?string $model = Inventory::class;
 
-
     protected static ?string $navigationIcon = 'heroicon-o-squares-plus';
 
     protected static ?string $navigationLabel = 'Menejemen Inventori';
