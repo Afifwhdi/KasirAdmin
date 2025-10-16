@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | API Token
+    |--------------------------------------------------------------------------
+    |
+    | This token is used to authenticate API requests from external applications
+    | like POS desktop app. Generate a secure random string for production.
+    |
+    */
+
+    'api_token' => env('API_TOKEN'),
+
 ];

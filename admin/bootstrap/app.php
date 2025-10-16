@@ -23,6 +23,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);
+        
+        // Register API token middleware alias
+        $middleware->alias([
+            'api.token' => \App\Http\Middleware\ValidateApiToken::class,
+        ]);
     })
 
     ->withSchedule(function (Schedule $schedule) {
