@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Report;
-use App\Models\CashFlow;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -24,7 +23,7 @@ class ReportDownloadController extends Controller
             $this->generatePdf($disk, $report);
         }
 
-        $downloadName = (trim($report->name) ?: 'LAPORAN') . '.pdf';
+        $downloadName = (trim($report->name) ?: 'LAPORAN_PENJUALAN') . '.pdf';
 
         if (!Storage::disk($disk)->exists($report->path_file)) {
             abort(404, 'File laporan tidak ditemukan.');
@@ -39,63 +38,37 @@ class ReportDownloadController extends Controller
 
     private function defaultPath(Report $report): string
     {
-        $type = $report->report_type ?? 'inflow';
         $start = Carbon::parse($report->start_date)->toDateString();
         $end = Carbon::parse($report->end_date)->toDateString();
 
-        return "reports/{$type}_{$start}_{$end}.pdf";
+        return "reports/penjualan_{$start}_{$end}.pdf";
     }
 
     private function generatePdf(string $disk, Report $report): void
     {
-        $type  = $report->report_type;
-        $start = \Illuminate\Support\Carbon::parse($report->start_date)->startOfDay();
-        $end   = \Illuminate\Support\Carbon::parse($report->end_date)->endOfDay();
+        $start = Carbon::parse($report->start_date)->startOfDay();
+        $end   = Carbon::parse($report->end_date)->endOfDay();
 
-        switch ($type) {
-            case 'inflow':
-                $view  = 'pdf.reports.pemasukan';
-                $title = 'Laporan Uang Masuk';
-                $data = \App\Models\CashFlow::query()
-                    ->where('type', 'income')                      
-                    ->whereBetween('date', [$start->toDateString(), $end->toDateString()]) 
-                    ->orderBy('date')
-                    ->get();
-                break;
-
-            case 'outflow':
-                $view  = 'pdf.reports.pengeluaran';
-                $title = 'Laporan Uang Keluar';
-                $data = \App\Models\CashFlow::query()
-                    ->where('type', 'expense')                     
-                    ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-                    ->orderBy('date')
-                    ->get();
-                break;
-
-            case 'sales':
-            default:
-                $view  = 'pdf.reports.penjualan';
-                $title = 'Laporan Penjualan';
-                $data = \App\Models\Transaction::query()
-                    ->with(['transactionItems:transaction_id,quantity,price', 'paymentMethod'])
-                    ->whereBetween('created_at', [$start, $end])   // ✅ pakai created_at
-                    ->orderBy('created_at')
-                    ->get(['id','payment_method_id','transaction_number','total','created_at']);
-                break;
-        }
+        $view  = 'pdf.reports.penjualan';
+        $title = 'Laporan Penjualan';
+        $data = Transaction::query()
+            ->with(['transactionItems:transaction_id,quantity,price', 'paymentMethod'])
+            ->where('status', 'paid')
+            ->whereBetween('created_at', [$start, $end])
+            ->orderBy('created_at')
+            ->get(['id','payment_method_id','transaction_number','total','created_at']);
 
         $fileName = sprintf('%s %s s.d. %s', $title, $start->toDateString(), $end->toDateString());
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view, [
+        $pdf = Pdf::loadView($view, [
             'data'     => $data,
             'fileName' => $fileName,
         ])->setPaper('a4', 'portrait');
 
         $dir = dirname($report->path_file);
-        if (!\Illuminate\Support\Facades\Storage::disk($disk)->exists($dir)) {
-            \Illuminate\Support\Facades\Storage::disk($disk)->makeDirectory($dir);
+        if (!Storage::disk($disk)->exists($dir)) {
+            Storage::disk($disk)->makeDirectory($dir);
         }
-        \Illuminate\Support\Facades\Storage::disk($disk)->put($report->path_file, $pdf->output());
+        Storage::disk($disk)->put($report->path_file, $pdf->output());
     }
 }

@@ -3,39 +3,53 @@
 namespace App\Filament\Widgets;
 
 use Carbon\Carbon;
-use App\Models\CashFlow;
 use App\Models\Transaction;
-use App\Models\TransactionItem;
-use App\Observers\TransactionObserver;
+use App\Models\Product;
 use Filament\Support\Enums\IconPosition;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-
 
 class TotalStatsOverview extends BaseWidget
 {
     protected static ?int $sort = 2;
-
-    protected function getDescription(): ?string
+    
+    protected function getHeading(): string
     {
-        return 'Total dari semua perhitungan';
-    }
-
-    protected function getHeading(): ?string
-    {
-        return 'Total Keseluruhan';
+        return 'Statistik Keseluruhan';
     }
 
     protected function getStats(): array
     {
-        $totalInFlow = CashFlow::where('type','income')->sum('amount');
-        $totalOutFlow = CashFlow::where('type','expense')->sum('amount');
+        // Total Penjualan Keseluruhan
+        $totalRevenue = Transaction::where('status', 'paid')->sum('total');
+        
+        // Total Transaksi
+        $totalTransactions = Transaction::where('status', 'paid')->count();
+        
+        // Rata-rata Penjualan per Transaksi
+        $averageTransaction = $totalTransactions > 0 ? $totalRevenue / $totalTransactions : 0;
+        
+        // Total Produk
+        $totalProducts = Product::count();
+        
+        // Produk Stock Rendah
+        $lowStock = Product::whereColumn('stock', '<=', 'min_stock')->count();
         
         return [
-            Stat::make('Total Uang Masuk', 'Rp ' . number_format($totalInFlow, 0, ",", ".")),
-            Stat::make('Total Uang Keluar', 'Rp ' . number_format($totalOutFlow, 0, ",", ".")),
-            Stat::make('Total Uang Toko', 'Rp ' . number_format($totalInFlow - $totalOutFlow ,0,",",".")),
+            Stat::make('Total Pendapatan', 'Rp ' . number_format($totalRevenue, 0, ",", "."))
+                ->description(number_format($totalTransactions, 0, ",", ".") . ' transaksi')
+                ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
+                ->color('success'),
+                
+            Stat::make('Rata-rata', 'Rp ' . number_format($averageTransaction, 0, ",", "."))
+                ->description('Per transaksi')
+                ->descriptionIcon('heroicon-m-calculator', IconPosition::Before)
+                ->color('info'),
+                
+            Stat::make('Stok Rendah', $lowStock . ' produk')
+                ->description('Total ' . $totalProducts . ' produk')
+                ->descriptionIcon('heroicon-m-cube', IconPosition::Before)
+                ->color($lowStock > 0 ? 'warning' : 'success'),
         ];
     }
 }
