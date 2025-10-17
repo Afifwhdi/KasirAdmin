@@ -20,7 +20,7 @@ class CategoryResource extends Resource
 
     protected static ?string $navigationLabel = 'Kategori';
 
-    protected static ?string $navigationGroup = 'Menejemen Produk';
+    protected static string|\UnitEnum|null $navigationGroup = 'Menejemen Produk';
 
     protected static ?int $navigationSort = 1;
 
