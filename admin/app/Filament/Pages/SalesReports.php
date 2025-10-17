@@ -41,9 +41,9 @@ class SalesReports extends Page implements HasForms
         $this->form->fill();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Section::make('Filter Periode')
                     ->schema([
