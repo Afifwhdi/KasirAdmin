@@ -69,7 +69,9 @@ class ListProducts extends ListRecords
                     );
                 }),
 
-            Actions\CreateAction::make()->label('Tambah'),
+            Actions\CreateAction::make()
+                ->label('Tambah')
+                ->modalWidth('5xl'),
 
             Action::make('importCsv')
                 ->label('Import CSV')

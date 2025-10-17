@@ -68,7 +68,9 @@ class ProductsTable
                 //
             ])
             ->actions([
-                Actions\EditAction::make()->label('Edit'),
+                Actions\EditAction::make()
+                    ->label('Edit')
+                    ->modalWidth('5xl'),
                 Actions\DeleteAction::make()->label('Hapus'),
 
                 Actions\Action::make('printBarcodes')
