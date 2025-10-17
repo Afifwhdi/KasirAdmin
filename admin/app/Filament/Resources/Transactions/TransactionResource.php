@@ -1,7 +1,6 @@
 <?php
 
-namespace App\Filament\Resources;
-
+namespace App\Filament\Resources\Transactions;
 
 use Filament\Support\Exceptions\Halt;
 use Filament\Support\Enums\FontWeight;
@@ -10,8 +9,8 @@ use Filament\Infolists\Components\TextEntry;
 use Illuminate\Database\Eloquent\Builder;
 
 use Filament\Resources\Resource;
-use App\Filament\Resources\TransactionResource\Pages;
-use App\Filament\Resources\TransactionResource\RelationManagers\TransactionItemsRelationManager;
+use App\Filament\Resources\Transactions\Pages;
+use App\Filament\Resources\Transactions\RelationManagers\TransactionItemsRelationManager;
 use App\Models\Transaction;
 use App\Models\PaymentMethod;
 use App\Models\Product;
