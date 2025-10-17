@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\CashFlowResource\Widgets;
+namespace App\Filament\Resources\CashFlows\Widgets;
 
-use App\Filament\Resources\CashFlowResource\Pages\ListCashFlows;
+use App\Filament\Resources\CashFlows\Pages\ListCashFlows;
 use Filament\Support\Enums\IconPosition;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Filament\Widgets\Concerns\InteractsWithPageTable;

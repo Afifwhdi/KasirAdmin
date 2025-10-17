@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\CashFlowResource\Pages;
+namespace App\Filament\Resources\CashFlows\Pages;
 
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
-use App\Filament\Resources\CashFlowResource;
+use App\Filament\Resources\CashFlows\CashFlowResource;
 use Filament\Pages\Concerns\ExposesTableToWidgets;
 
 class ListCashFlows extends ListRecords
