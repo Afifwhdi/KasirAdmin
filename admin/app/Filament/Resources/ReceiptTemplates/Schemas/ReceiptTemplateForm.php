@@ -12,12 +12,14 @@ class ReceiptTemplateForm
     {
         return [
             Section::make('Informasi Template')
+                ->description('Setup dasar template struk untuk printer thermal')
                 ->schema([
                     Forms\Components\TextInput::make('name')
                         ->label('Nama Template')
                         ->required()
                         ->maxLength(255)
-                        ->placeholder('e.g., Template Default'),
+                        ->placeholder('Misal: Template Toko Utama')
+                        ->helperText('Nama untuk identifikasi template'),
                         
                     Forms\Components\Select::make('paper_width')
                         ->label('Lebar Kertas')
@@ -26,7 +28,8 @@ class ReceiptTemplateForm
                             '80' => '80mm (Thermal Standard)',
                         ])
                         ->default('80')
-                        ->required(),
+                        ->required()
+                        ->helperText('Sesuaikan dengan lebar kertas printer thermal Anda'),
                         
                     Forms\Components\Select::make('font_size')
                         ->label('Ukuran Font')
@@ -36,64 +39,103 @@ class ReceiptTemplateForm
                             'large' => 'Besar',
                         ])
                         ->default('normal')
-                        ->required(),
+                        ->required()
+                        ->helperText('Ukuran teks pada struk'),
                 ])
-                ->columns(3),
+                ->columns(3)
+                ->collapsible(),
                 
             Section::make('Konten Header')
+                ->description('Informasi yang muncul di bagian atas struk')
                 ->schema([
                     Forms\Components\FileUpload::make('logo_path')
-                        ->label('Logo Toko')
+                        ->label('Logo Toko (Opsional)')
                         ->image()
                         ->directory('receipt-logos')
                         ->maxSize(1024)
-                        ->hint('Maks. 1MB, format: PNG/JPG'),
+                        ->imageEditor()
+                        ->imageEditorAspectRatios([
+                            '1:1',
+                            '16:9',
+                        ])
+                        ->hint('Maks. 1MB, format: PNG/JPG')
+                        ->helperText('Upload logo toko Anda untuk ditampilkan di struk')
+                        ->columnSpanFull(),
                         
                     Forms\Components\Textarea::make('header_text')
                         ->label('Teks Header')
-                        ->rows(4)
-                        ->placeholder("Nama Toko\nAlamat Lengkap\nTelp: 08xxxxxxxxx"),
+                        ->rows(5)
+                        ->required()
+                        ->placeholder("TOKO SAYA\nJl. Contoh No. 123, Jakarta\nTelp: 081234567890\nEmail: toko@example.com")
+                        ->helperText('Nama toko, alamat, kontak. Tekan Enter untuk baris baru.')
+                        ->columnSpanFull(),
                 ])
-                ->columns(2),
+                ->columns(1)
+                ->collapsible(),
                 
             Section::make('Konten Footer')
+                ->description('Pesan atau informasi tambahan di bagian bawah struk')
                 ->schema([
                     Forms\Components\Textarea::make('footer_text')
                         ->label('Teks Footer')
-                        ->rows(3)
-                        ->placeholder("Terima kasih atas kunjungan Anda\nBarang yang sudah dibeli tidak dapat dikembalikan"),
+                        ->rows(4)
+                        ->placeholder("Terima kasih atas kunjungan Anda!\nBarang yang sudah dibeli tidak dapat dikembalikan\n\nFollow IG: @tokosaya")
+                        ->helperText('Ucapan terima kasih, kebijakan return, atau info promo'),
                 ])
-                ->columns(1),
+                ->columns(1)
+                ->collapsible(),
                 
             Section::make('Pengaturan Tampilan')
+                ->description('Atur elemen yang ditampilkan pada struk')
                 ->schema([
                     Forms\Components\Toggle::make('show_logo')
                         ->label('Tampilkan Logo')
-                        ->default(true),
+                        ->default(true)
+                        ->inline(false)
+                        ->helperText('Tampilkan logo toko di struk (jika sudah diupload)'),
                         
                     Forms\Components\Toggle::make('show_barcode')
                         ->label('Tampilkan Barcode Transaksi')
-                        ->default(true),
+                        ->default(true)
+                        ->inline(false)
+                        ->helperText('Barcode untuk tracking transaksi'),
                         
                     Forms\Components\Toggle::make('show_tax')
                         ->label('Tampilkan Detail Pajak')
-                        ->default(false),
+                        ->default(false)
+                        ->inline(false)
+                        ->helperText('Tampilkan breakdown pajak jika ada'),
                 ])
-                ->columns(3),
+                ->columns(3)
+                ->collapsible(),
                 
             Section::make('Status Template')
+                ->description('Atur status dan penggunaan template')
                 ->schema([
                     Forms\Components\Toggle::make('is_active')
-                        ->label('Template Aktif')
+                        ->label('Aktifkan Template')
                         ->default(true)
-                        ->helperText('Hanya template aktif yang bisa digunakan'),
+                        ->inline(false)
+                        ->helperText('Template aktif dapat digunakan untuk print struk'),
                         
                     Forms\Components\Toggle::make('is_default')
-                        ->label('Jadikan Default')
+                        ->label('Jadikan Template Default')
                         ->default(false)
-                        ->helperText('Template ini akan digunakan secara default'),
+                        ->inline(false)
+                        ->helperText('Template default akan otomatis digunakan saat print struk')
+                        ->reactive()
+                        ->afterStateUpdated(function ($state) {
+                            if ($state) {
+                                \Filament\Notifications\Notification::make()
+                                    ->title('Template Default')
+                                    ->body('Template lain akan otomatis di-nonaktifkan sebagai default')
+                                    ->info()
+                                    ->send();
+                            }
+                        }),
                 ])
-                ->columns(2),
+                ->columns(2)
+                ->collapsible(),
         ];
     }
 }
