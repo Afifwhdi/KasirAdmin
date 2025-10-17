@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Inventories\Schemas;
 use App\Models\Product;
 use App\Services\InventoryLabelService;
 use Filament\Forms;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Components\Repeater;
 use Filament\Schemas\Schema;
 
