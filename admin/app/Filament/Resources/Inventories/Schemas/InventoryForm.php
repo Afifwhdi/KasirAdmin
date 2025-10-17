@@ -33,7 +33,7 @@ class InventoryForm
                         Forms\Components\Select::make('source')
                             ->label('Sumber')
                             ->required()
-                            ->options(fn (Forms\Get $get) => InventoryLabelService::getSourceOptionsByType($get('type'))),
+                            ->options(fn (Get $get) => InventoryLabelService::getSourceOptionsByType($get('type'))),
 
                         Forms\Components\TextInput::make('total')
                             ->label('Total Modal')
@@ -64,7 +64,7 @@ class InventoryForm
             ->relationship()
             ->live()
             ->columns(['md' => 10])
-            ->afterStateUpdated(function (Forms\Get $get, Forms\Set $set) {
+            ->afterStateUpdated(function (Get $get, Set $set) {
                 self::updateTotalPrice($get, $set);
             })
             ->schema([
@@ -77,11 +77,11 @@ class InventoryForm
                     ->relationship('product', 'name')
                     ->getOptionLabelFromRecordUsing(fn (Product $record) => "{$record->name}-({$record->stock})-{$record->sku}")
                     ->columnSpan(['md' => 4])
-                    ->afterStateHydrated(function (Forms\Set $set, Forms\Get $get, $state) {
+                    ->afterStateHydrated(function (Set $set, Get $get, $state) {
                         $product = Product::find($state);
                         $set('stock', $product->stock ?? 0);
                     })
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         $product = Product::find($state);
                         $set('cost_price', $product->cost_price ?? 0);
                         $set('stock', $product->stock ?? 0);
@@ -110,13 +110,13 @@ class InventoryForm
                     ->default(1)
                     ->minValue(1)
                     ->columnSpan(['md' => 2])
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         self::updateTotalPrice($get, $set);
                     }),
             ]);
     }
 
-    protected static function updateTotalPrice(Forms\Get $get, Forms\Set $set): void
+    protected static function updateTotalPrice(Get $get, Set $set): void
     {
         $selectedProducts = collect($get('inventoryItems'))->filter(fn ($item) => ! empty($item['product_id']) && ! empty($item['quantity']));
 

@@ -90,7 +90,7 @@ class TransactionResource extends Resource
                             ->relationship('paymentMethod', 'name')
                             ->required()
                             ->reactive()
-                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                 $paymentMethod = PaymentMethod::find($state);
                                 $set('is_cash', $paymentMethod?->is_cash ?? false);
 
@@ -99,7 +99,7 @@ class TransactionResource extends Resource
                                     $set('cash_received', $get('total'));
                                 }
                             })
-                            ->afterStateHydrated(function (Forms\Set $set, Forms\Get $get, $state) {
+                            ->afterStateHydrated(function (Set $set, Get $get, $state) {
                                 $paymentMethod = PaymentMethod::find($state);
 
                                 if (!$paymentMethod?->is_cash) {
@@ -114,8 +114,8 @@ class TransactionResource extends Resource
                             ->numeric()
                             ->reactive()
                             ->label('Nominal Bayar')
-                            ->readOnly(fn(Forms\Get $get) => $get('is_cash') == false)
-                            ->afterStateUpdated(fn(Forms\Set $set, Forms\Get $get, $state)
+                            ->readOnly(fn(Get $get) => $get('is_cash') == false)
+                            ->afterStateUpdated(fn(Set $set, Get $get, $state)
                             => self::updateExcangePaid($get, $set)),
                         TextInput::make('change_amount')
                             ->numeric()
@@ -330,14 +330,14 @@ class TransactionResource extends Resource
             ->relationship()
             ->live()
             ->columns(['md' => 10])
-            ->afterStateUpdated(fn(Forms\Get $get, Forms\Set $set)
+            ->afterStateUpdated(fn(Get $get, Set $set)
             => self::updateTotalPrice($get, $set))
             ->schema([
                 Select::make('product_id')
                     ->label('Produk')
                     ->required()
-                    ->options(fn(Forms\Get $get) => Product::query()->pluck('name', 'id'))
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                    ->options(fn(Get $get) => Product::query()->pluck('name', 'id'))
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         $product = Product::find($state);
                         // $set('product_name_snapshot', $product->name ?? '');
                         $set('cost_price', $product->cost_price ?? 0);
@@ -354,7 +354,7 @@ class TransactionResource extends Resource
                     ->default(1)
                     ->minValue(1)
                     ->columnSpan(['md' => 5])
-                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                    ->afterStateUpdated(function ($state, Set $set, Get $get) {
                         $id = $get('product_id');
                         $product = Product::find($id);
                         $quantity = (int) ($get('quantity') ?? 0);
@@ -421,7 +421,7 @@ class TransactionResource extends Resource
         ];
     }
 
-    protected static function updateTotalPrice(Forms\Get $get, Forms\Set $set): void
+    protected static function updateTotalPrice(Get $get, Set $set): void
     {
         $selectedProducts = collect($get('transactionItems'))
             ->filter(fn($item) => !empty($item['product_id']) && !empty($item['quantity']));
@@ -433,7 +433,7 @@ class TransactionResource extends Resource
         $set('total', $total);
     }
 
-    protected static function updateExcangePaid(Forms\Get $get, Forms\Set $set): void
+    protected static function updateExcangePaid(Get $get, Set $set): void
     {
         $paidAmount = (int) $get('cash_received') ?? 0;
         $totalPrice = (int) $get('total') ?? 0;
