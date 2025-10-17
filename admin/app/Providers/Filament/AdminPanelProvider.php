@@ -24,7 +24,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
+            ->login(\App\Filament\Pages\Auth\Login::class)
             ->sidebarCollapsibleOnDesktop()
             ->colors(['primary' => '#1E93AB',])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
