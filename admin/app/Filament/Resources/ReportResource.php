@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Report;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Filament\Resources\ReportResource\Pages;
@@ -21,17 +21,17 @@ class ReportResource extends Resource
 
     protected static ?string $model = Report::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
 
     protected static ?string $navigationLabel = 'Laporan Keuangan';
 
     protected static ?int $navigationSort = 6;
 
-    protected static ?string $navigationGroup = 'Menejemen keuangan';
+    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Section::make('Setting Laporan')
                     ->schema([

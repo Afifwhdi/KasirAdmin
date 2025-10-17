@@ -6,7 +6,7 @@ use Filament\Forms;
 use Filament\Tables;
 use App\Models\Setting;
 use Filament\Forms\Get;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Filament\Resources\SettingResource\Pages;
@@ -16,17 +16,17 @@ class SettingResource extends Resource
 
     protected static ?string $model = Setting::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-printer';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-printer';
 
     protected static ?string $navigationLabel = 'Pengaturan';
 
     protected static ?int $navigationSort = 8;
 
-    protected static ?string $navigationGroup = 'Pengaturan Toko';
+    protected static string | \UnitEnum | null $navigationGroup = 'Pengaturan Toko';
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Section::make('Profil Toko')
                 ->schema([

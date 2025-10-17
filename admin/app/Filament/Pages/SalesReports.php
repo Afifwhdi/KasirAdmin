@@ -20,13 +20,13 @@ class SalesReports extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-chart-bar';
     protected static ?string $navigationLabel = 'Laporan Analytics';
     protected static ?string $title = 'Laporan Penjualan & Analytics';
-    protected static ?string $navigationGroup = 'Menejemen keuangan';
+    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
     protected static ?int $navigationSort = 7;
 
-    protected static string $view = 'filament.pages.sales-reports';
+    protected string $view = 'filament.pages.sales-reports';
 
     public ?array $data = [];
     public $startDate;

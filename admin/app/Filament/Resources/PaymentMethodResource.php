@@ -6,7 +6,7 @@ use App\Filament\Resources\PaymentMethodResource\Pages;
 use App\Filament\Resources\PaymentMethodResource\RelationManagers;
 use App\Models\PaymentMethod;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -18,13 +18,13 @@ class PaymentMethodResource extends Resource
 
     protected static ?string $model = PaymentMethod::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-newspaper';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-newspaper';
 
     protected static ?int $navigationSort = 5;
 
     protected static ?string $navigationLabel = 'Metode Pembayaran';
 
-    protected static ?string $navigationGroup = 'Menejemen keuangan';
+    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
 
     public static function getNavigationBadge(): ?string
     {
@@ -32,9 +32,9 @@ class PaymentMethodResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\TextInput::make('name')
                     ->label('Metode Pembayaran')

@@ -6,7 +6,7 @@ use Filament\Forms;
 use Filament\Tables;
 use App\Models\Product;
 use App\Models\Category;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Milon\Barcode\DNS1D;
 use Filament\Tables\Table;
 use Filament\Actions\Action;
@@ -19,8 +19,8 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
-    protected static ?string $navigationGroup = 'Master Data';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
+    protected static string | \UnitEnum | null $navigationGroup = 'Master Data';
     protected static ?string $navigationLabel = 'Produk';
 
     public static function getEloquentQuery(): Builder
@@ -28,9 +28,9 @@ class ProductResource extends Resource
         return parent::getEloquentQuery()->orderByDesc('created_at');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Toggle::make('is_plu_enabled')
                     ->label('Kiloan')

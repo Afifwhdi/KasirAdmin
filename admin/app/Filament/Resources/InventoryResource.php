@@ -6,7 +6,7 @@ use Filament\Forms;
 use Filament\Tables;
 use App\Models\Product;
 use Filament\Forms\Get;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use App\Models\Inventory;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
@@ -19,13 +19,13 @@ class InventoryResource extends Resource
 
     protected static ?string $model = Inventory::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-squares-plus';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-squares-plus';
 
     protected static ?string $navigationLabel = 'Menejemen Inventori';
 
     protected static ?int $navigationSort = 3;
 
-    protected static ?string $navigationGroup = 'Menejemen Produk';
+    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen Produk';
 
     public static function getNavigationBadge(): ?string
     {
@@ -33,9 +33,9 @@ class InventoryResource extends Resource
     }
 
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Section::make('Details')
                     ->schema([

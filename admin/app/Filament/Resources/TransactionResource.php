@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Infolists\Infolist;
+
 use Filament\Support\Exceptions\Halt;
 use Filament\Support\Enums\FontWeight;
 use Filament\Notifications\Notification;
@@ -16,7 +16,7 @@ use App\Models\Transaction;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Section;
@@ -40,10 +40,10 @@ use Filament\Tables\Actions\DeleteBulkAction;
 class TransactionResource extends Resource
 {
     protected static ?string $model = Transaction::class;
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-shopping-bag';
     protected static ?string $navigationLabel = 'Transaksi';
     protected static ?string $pluralLabel = 'Transaksi';
-    protected static ?string $navigationGroup = 'Menejemen keuangan';
+    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
     protected static ?int $navigationSort = 3;
 
     public static function getNavigationBadge(): ?string
@@ -57,9 +57,9 @@ class TransactionResource extends Resource
             ->orderBy('created_at', 'desc');
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Section::make('Produk dipesan')->schema([
                     self::getItemsRepeater(),
@@ -396,9 +396,9 @@ class TransactionResource extends Resource
             });
     }
 
-    public static function infolist(Infolist $infolist): Infolist
+    public static function infolist(Schema $schema): Schema
     {
-        return $infolist
+        return $schema
             ->schema([
                 TextEntry::make('transaction_number')->label('No.Transaksi :')->badge()->color('primary')->weight(FontWeight::Bold),
                 // TextEntry::make('paymentMethod.name')->label('Metode Pembayaran :')->badge()->color('primary')->weight(FontWeight::Bold),

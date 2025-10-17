@@ -8,7 +8,7 @@ use Filament\Tables;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use App\Models\CashFlow;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use Filament\Support\Enums\MaxWidth;
@@ -22,22 +22,22 @@ class CashFlowResource extends Resource
 
     protected static ?string $model = CashFlow::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-bar';
 
     protected static ?int $navigationSort = 5;
 
     protected static ?string $navigationLabel = 'Alur Kas';
 
-    protected static ?string $navigationGroup = 'Menejemen keuangan';
+    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
 
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
     }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\ToggleButtons::make('type')
                     ->options(CashFlowLabelService::getTypes())
