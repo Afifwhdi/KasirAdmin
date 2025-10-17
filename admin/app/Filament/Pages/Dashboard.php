@@ -5,9 +5,9 @@ namespace App\Filament\Pages;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Schemas\Schema;
 
 class Dashboard extends BaseDashboard
 {
@@ -15,9 +15,9 @@ class Dashboard extends BaseDashboard
 
     use BaseDashboard\Concerns\HasFiltersForm;
 
-    public function filtersForm(Form $form): Form
+    public function filtersForm(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Section::make()
                     ->schema([
