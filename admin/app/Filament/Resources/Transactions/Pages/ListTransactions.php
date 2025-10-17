@@ -5,7 +5,7 @@ namespace App\Filament\Resources\Transactions\Pages;
 use App\Filament\Resources\Transactions\TransactionResource;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Actions;
-use App\Models\Setting;
+use App\Models\ReceiptTemplate;
 
 class ListTransactions extends ListRecords
 {
@@ -48,9 +48,20 @@ class ListTransactions extends ListRecords
 
     public function printStruk($order, $items)
     {
+        $template = ReceiptTemplate::where('is_default', true)->first() 
+                    ?? ReceiptTemplate::where('is_active', true)->first();
+                    
+        if (!$template) {
+            \Filament\Notifications\Notification::make()
+                ->title('Template struk belum dikonfigurasi')
+                ->warning()
+                ->send();
+            return;
+        }
+        
         $this->dispatch(
             'doPrintReceipt',
-            store: Setting::first(),
+            template: $template,
             order: $order,
             items: $items,
             date: $order->created_at->format('d-m-Y H:i:s')
