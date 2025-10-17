@@ -6,6 +6,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Navigation\MenuItem;
 use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Responses\Auth\Contracts\LogoutResponse;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -18,6 +19,11 @@ use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 
 class AdminPanelProvider extends PanelProvider
 {
+    public function boot(): void
+    {
+        $this->app->bind(LogoutResponse::class, \App\Http\Responses\LogoutResponse::class);
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
@@ -46,7 +52,6 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
                 \App\Http\Middleware\BlockKasirFromAdmin::class,
             ])
-            ->userMenuItems(['logout' => MenuItem::make()->label('Log out')->color('danger'),])
             ->topbar(!request()->is('pos*'))
             ->navigation(!request()->is('pos*'))
             ->font('inter');
