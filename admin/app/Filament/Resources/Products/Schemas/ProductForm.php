@@ -17,8 +17,7 @@ class ProductForm
                         Forms\Components\TextInput::make('name')
                             ->label('Nama Produk')
                             ->required()
-                            ->maxLength(255)
-                            ->columnSpan(2),
+                            ->maxLength(255),
 
                         Forms\Components\Select::make('category_id')
                             ->label('Kategori')
@@ -48,7 +47,7 @@ class ProductForm
                             ->default(true)
                             ->inline(false),
                     ])
-                    ->columns(2),
+                    ->columns(1),
 
                 Section::make('Harga')
                     ->schema([
@@ -66,7 +65,7 @@ class ProductForm
                             ->minValue(0)
                             ->required(),
                     ])
-                    ->columns(2),
+                    ->columns(1),
 
                 Section::make('Stok')
                     ->schema([
@@ -85,7 +84,7 @@ class ProductForm
                             ->default(5)
                             ->required(),
                     ])
-                    ->columns(2),
+                    ->columns(1),
             ]);
     }
 }
