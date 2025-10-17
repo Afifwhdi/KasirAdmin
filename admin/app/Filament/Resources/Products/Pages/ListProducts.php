@@ -7,7 +7,7 @@ use App\Models\Product;
 use Filament\Actions\Action;
 use App\Imports\ProductsImport;
 use Maatwebsite\Excel\Facades\Excel;
-use Filament\Resources\Components\Tab;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\FileUpload;
 use Filament\Resources\Pages\ListRecords;

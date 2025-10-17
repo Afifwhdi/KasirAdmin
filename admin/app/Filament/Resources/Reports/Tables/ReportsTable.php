@@ -3,8 +3,8 @@
 namespace App\Filament\Resources\Reports\Tables;
 
 use App\Models\Report;
+use Filament\Actions;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 
 class ReportsTable
@@ -61,21 +61,21 @@ class ReportsTable
             ->defaultSort('created_at', 'desc')
             ->filters([])
             ->actions([
-                Action::make('download')
+                Actions\Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-m-arrow-down-tray')
                     ->color('primary')
                     ->url(fn (Report $record) => route('reports.download', $record))
                     ->visible(fn () => true),
 
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
             ])
             ->emptyStateIcon('heroicon-o-banknotes')
             ->emptyStateHeading('Belum ada laporan keuangan')
             ->emptyStateDescription('Semua laporan keuangan yang kamu input akan tampil di sini.')
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Settings\Schemas;
 
 use Filament\Forms;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class SettingForm
@@ -11,7 +12,7 @@ class SettingForm
     {
         return $schema
             ->schema([
-                Forms\Components\Section::make('Profil Toko')
+                Section::make('Profil Toko')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -30,7 +31,7 @@ class SettingForm
                             ->label('Nomor Telepon'),
                     ]),
 
-                Forms\Components\Section::make('Setting Printer')
+                Section::make('Setting Printer')
                     ->schema([
                         Forms\Components\ToggleButtons::make('print_via_bluetooth')
                             ->required()

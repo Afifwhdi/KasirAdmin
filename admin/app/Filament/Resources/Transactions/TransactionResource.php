@@ -25,17 +25,12 @@ use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
+use Filament\Actions;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
-
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\ViewAction;
-use Filament\Tables\Actions\DeleteAction;
-
-use Filament\Tables\Actions\DeleteBulkAction;
 
 
 class TransactionResource extends Resource
@@ -193,7 +188,7 @@ class TransactionResource extends Resource
                     ]),
             ], layout: Tables\Enums\FiltersLayout::Modal)
             ->actions([
-                Action::make('pay')
+                Actions\Action::make('pay')
                     ->label('Bayar')
                     ->icon('heroicon-o-banknotes')
                     ->color('success')
@@ -209,7 +204,7 @@ class TransactionResource extends Resource
                             ->send();
                     }),
 
-                Action::make('cancel')
+                Actions\Action::make('cancel')
                     ->label('Batalkan')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
@@ -217,7 +212,7 @@ class TransactionResource extends Resource
                     ->visible(fn($record) => in_array($record->status, ['paid', 'pending']))
                     ->action(fn($record) => $record->update(['status' => 'cancelled'])),
 
-                Action::make('refund')
+                Actions\Action::make('refund')
                     ->label('Refund')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('gray')
@@ -244,13 +239,13 @@ class TransactionResource extends Resource
                             ->send();
                     }),
 
-                ViewAction::make()->color('warning')->label('Detail'),
-                DeleteAction::make()->label('Hapus'),
+                Actions\ViewAction::make()->color('warning')->label('Detail'),
+                Actions\DeleteAction::make()->label('Hapus'),
             ])
             ->bulkActions([
-                DeleteBulkAction::make()->label('Hapus')->button(),
+                Actions\DeleteBulkAction::make()->label('Hapus')->button(),
 
-                Tables\Actions\BulkAction::make('bulkPay')
+                Actions\BulkAction::make('bulkPay')
                     ->label('Bayar Transaksi')
                     ->icon('heroicon-o-banknotes')
                     ->color('success')
@@ -271,7 +266,7 @@ class TransactionResource extends Resource
                             ->send();
                     }),
 
-                Tables\Actions\BulkAction::make('bulkCancel')
+                Actions\BulkAction::make('bulkCancel')
                     ->label('Batalkan Transaksi')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
@@ -288,7 +283,7 @@ class TransactionResource extends Resource
                             ->send();
                     }),
 
-                Tables\Actions\BulkAction::make('bulkRefund')
+                Actions\BulkAction::make('bulkRefund')
                     ->label('Refund Transaksi')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('gray')

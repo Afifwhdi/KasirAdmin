@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PaymentMethods\Tables;
 
+use Filament\Actions;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -33,12 +34,12 @@ class PaymentMethodsTable
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

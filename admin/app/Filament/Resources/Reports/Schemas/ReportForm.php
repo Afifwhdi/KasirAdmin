@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Reports\Schemas;
 
 use Filament\Forms;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class ReportForm
@@ -11,30 +12,22 @@ class ReportForm
     {
         return $schema
             ->schema([
-                Forms\Components\Section::make('Setting Laporan')
+                Section::make('Laporan Penjualan')
+                    ->description('Generate laporan penjualan berdasarkan rentang tanggal')
                     ->schema([
-                        Forms\Components\ToggleButtons::make('report_type')
-                            ->options([
-                                'inflow' => 'Uang Masuk',
-                                'outflow' => 'Uang Keluar',
-                                'sales' => 'Penjualan',
-                            ])
-                            ->colors([
-                                'inflow' => 'success',
-                                'outflow' => 'danger',
-                                'sales' => 'info',
-                            ])
-                            ->default('inflow')
-                            ->grouped(),
-
                         Forms\Components\DatePicker::make('start_date')
                             ->label('Dari Tanggal')
-                            ->required(),
+                            ->required()
+                            ->maxDate(now())
+                            ->default(now()->startOfMonth()),
 
                         Forms\Components\DatePicker::make('end_date')
                             ->label('Sampai Tanggal')
-                            ->required(),
-                    ]),
+                            ->required()
+                            ->maxDate(now())
+                            ->default(now()),
+                    ])
+                    ->columns(2),
             ]);
     }
 }

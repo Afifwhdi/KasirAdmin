@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
+use Filament\Actions;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -67,18 +68,18 @@ class ProductsTable
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make()->label('Edit'),
-                Tables\Actions\DeleteAction::make()->label('Hapus'),
+                Actions\EditAction::make()->label('Edit'),
+                Actions\DeleteAction::make()->label('Hapus'),
 
-                Tables\Actions\Action::make('printBarcodes')
+                Actions\Action::make('printBarcodes')
                     ->label('Cetak Barcode')
                     ->icon('heroicon-o-printer')
                     ->hidden(true),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make()->label('Hapus Terpilih'),
+                Actions\DeleteBulkAction::make()->label('Hapus Terpilih'),
 
-                Tables\Actions\BulkAction::make('generateBarcodePdf')
+                Actions\BulkAction::make('generateBarcodePdf')
                     ->label('Cetak Barcode (Bulk)')
                     ->hidden(true),
             ])
