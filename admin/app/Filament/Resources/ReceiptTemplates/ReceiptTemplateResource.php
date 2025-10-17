@@ -21,7 +21,7 @@ class ReceiptTemplateResource extends Resource
     protected static string | \UnitEnum | null $navigationGroup = 'Pengaturan';
     protected static ?int $navigationSort = 3;
     
-    public static function schema(Schema $schema): Schema
+    public static function form(Schema $schema): Schema
     {
         return $schema->schema(ReceiptTemplateForm::schema());
     }
