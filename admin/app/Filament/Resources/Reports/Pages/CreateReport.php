@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\ReportResource\Pages;
+namespace App\Filament\Resources\Reports\Pages;
 
-use App\Filament\Resources\ReportResource;
+use App\Filament\Resources\Reports\ReportResource;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Carbon;
 
