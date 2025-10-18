@@ -2,8 +2,12 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
-use Filament\Actions;
-use Filament\Tables;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class ProductsTable
@@ -12,53 +16,53 @@ class ProductsTable
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nama')
                     ->searchable()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('category.name')
+                TextColumn::make('category.name')
                     ->label('Kategori')
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('stock')
+                TextColumn::make('stock')
                     ->label('Stok')
                     ->sortable()
                     ->toggleable()
-                    ->formatStateUsing(fn ($state) => (int) $state)
-                    ->color(fn ($record) => $record->stock <= $record->min_stock ? 'danger' : 'success')
+                    ->formatStateUsing(fn($state) => (int) $state)
+                    ->color(fn($record) => $record->stock <= $record->min_stock ? 'danger' : 'success')
                     ->badge(),
 
-                Tables\Columns\TextColumn::make('min_stock')
+                TextColumn::make('min_stock')
                     ->label('Min. Stok')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
-                    ->formatStateUsing(fn ($state) => (int) $state),
+                    ->formatStateUsing(fn($state) => (int) $state),
 
-                Tables\Columns\TextColumn::make('cost_price')
+                TextColumn::make('cost_price')
                     ->label('Modal')
                     ->money('idr', true)
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->label('Harga')
                     ->money('idr', true)
                     ->sortable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('barcode')
+                TextColumn::make('barcode')
                     ->label('Barcode')
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('sku')
+                TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable()
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime()
                     ->since()
@@ -68,20 +72,23 @@ class ProductsTable
                 //
             ])
             ->actions([
-                Actions\EditAction::make()
+                EditAction::make()
                     ->label('Edit')
                     ->modalWidth('5xl'),
-                Actions\DeleteAction::make()->label('Hapus'),
 
-                Actions\Action::make('printBarcodes')
+                DeleteAction::make()
+                    ->label('Hapus'),
+
+                Action::make('printBarcodes')
                     ->label('Cetak Barcode')
                     ->icon('heroicon-o-printer')
                     ->hidden(true),
             ])
             ->bulkActions([
-                Actions\DeleteBulkAction::make()->label('Hapus Terpilih'),
+                DeleteBulkAction::make()
+                    ->label('Hapus Terpilih'),
 
-                Actions\BulkAction::make('generateBarcodePdf')
+                BulkAction::make('generateBarcodePdf')
                     ->label('Cetak Barcode (Bulk)')
                     ->hidden(true),
             ])

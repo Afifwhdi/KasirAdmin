@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
-use Filament\Forms;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
 
 class ProductForm
 {
@@ -12,77 +14,80 @@ class ProductForm
     {
         return $schema
             ->schema([
+                Toggle::make('is_plu_enabled')
+                    ->label('Produk Kiloan')
+                    ->helperText('Aktifkan untuk produk yang dijual per kg')
+                    ->default(false)
+                    ->inline(false),
+
+                Toggle::make('is_active')
+                    ->label('Status Aktif')
+                    ->default(true)
+                    ->inline(false),
+
                 Section::make('Informasi Produk')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->label('Nama Produk')
                             ->required()
-                            ->maxLength(255),
+                            ->maxLength(255)
+                            ->columnSpanFull(),
 
-                        Forms\Components\Select::make('category_id')
+                        Select::make('category_id')
                             ->label('Kategori')
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
-                                    ->label('Nama Kategori')
-                                    ->required(),
-                            ]),
+                            ->columnSpanFull(),
 
-                        Forms\Components\TextInput::make('barcode')
+                        TextInput::make('barcode')
                             ->label('Barcode')
                             ->maxLength(191)
-                            ->placeholder('Opsional'),
+                            ->placeholder('Opsional')
+                            ->columnSpanFull(),
 
-                        Forms\Components\Toggle::make('is_plu_enabled')
-                            ->label('Produk Kiloan')
-                            ->helperText('Aktifkan untuk produk yang dijual per kg')
-                            ->default(false)
-                            ->inline(false),
-
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Status Aktif')
-                            ->default(true)
-                            ->inline(false),
+                        TextInput::make('Sku')
+                            ->label('Sku')
+                            ->disabled()
+                            ->placeholder('Terisi Otomatis')
+                            ->columnSpanFull(),
                     ])
                     ->columns(1),
 
                 Section::make('Harga')
                     ->schema([
-                        Forms\Components\TextInput::make('cost_price')
+                        TextInput::make('cost_price')
                             ->label('Harga Modal')
                             ->numeric()
                             ->prefix('Rp')
                             ->minValue(0)
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
 
-                        Forms\Components\TextInput::make('price')
+                        TextInput::make('price')
                             ->label('Harga Jual')
                             ->numeric()
                             ->prefix('Rp')
                             ->minValue(0)
-                            ->required(),
-                    ])
-                    ->columns(1),
+                            ->required()
+                            ->columnSpanFull(),
 
-                Section::make('Stok')
-                    ->schema([
-                        Forms\Components\TextInput::make('stock')
+                        TextInput::make('stock')
                             ->label('Stok Awal')
                             ->numeric()
                             ->minValue(0)
                             ->default(0)
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
 
-                        Forms\Components\TextInput::make('min_stock')
+                        TextInput::make('min_stock')
                             ->label('Stok Minimum')
-                            ->helperText('Peringatan muncul jika stok dibawah angka ini')
                             ->numeric()
                             ->minValue(1)
                             ->default(5)
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
                     ])
                     ->columns(1),
             ]);

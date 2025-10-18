@@ -13,19 +13,18 @@ use Filament\Widgets\Concerns\InteractsWithPageFilters;
 class StatsOverview extends BaseWidget
 {
     use InteractsWithPageFilters;
-    
+
     protected static ?int $sort = 1;
-    
+
     protected function getHeading(): string
     {
-        return '📊 Ringkasan Penjualan';
+        return 'Ringkasan Penjualan';
     }
 
     protected function getStats(): array
     {
-        // Get date range from filters
         $range = $this->filters['range'] ?? 'today';
-        
+
         switch ($range) {
             case 'yesterday':
                 $start = now()->subDay()->startOfDay();
@@ -43,22 +42,21 @@ class StatsOverview extends BaseWidget
                 $start = Carbon::parse($this->filters['startDate'] ?? now())->startOfDay();
                 $end = Carbon::parse($this->filters['endDate'] ?? now())->endOfDay();
                 break;
-            default: // today
+            default:
                 $start = now()->startOfDay();
                 $end = now()->endOfDay();
         }
-        
+
         $sales = Transaction::where('status', 'paid')
             ->whereBetween('created_at', [$start, $end])
             ->sum('total');
-        
+
         $transactions = Transaction::where('status', 'paid')
             ->whereBetween('created_at', [$start, $end])
             ->count();
-        
+
         $avgTransaction = $transactions > 0 ? $sales / $transactions : 0;
-        
-        // Chart data 7 hari terakhir
+
         $chartData = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = now()->subDays($i);
@@ -67,19 +65,19 @@ class StatsOverview extends BaseWidget
                 ->sum('total');
             $chartData[] = $chartSales;
         }
-        
+
         return [
             Stat::make('Total Penjualan', 'Rp ' . number_format($sales, 0, ",", "."))
                 ->description($transactions . ' transaksi')
                 ->descriptionIcon('heroicon-m-banknotes', IconPosition::Before)
                 ->chart($chartData)
                 ->color('success'),
-                
+
             Stat::make('Rata-rata', 'Rp ' . number_format($avgTransaction, 0, ",", "."))
                 ->description('Per transaksi')
                 ->descriptionIcon('heroicon-m-calculator', IconPosition::Before)
                 ->color('info'),
-                
+
             Stat::make('Trend 7 Hari', 'Grafik')
                 ->description('Penjualan harian')
                 ->descriptionIcon('heroicon-m-chart-bar', IconPosition::Before)

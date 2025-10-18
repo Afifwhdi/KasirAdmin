@@ -3,8 +3,11 @@
 namespace App\Filament\Resources\Reports\Tables;
 
 use App\Models\Report;
-use Filament\Actions;
-use Filament\Tables;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class ReportsTable
@@ -13,12 +16,12 @@ class ReportsTable
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->label('Nama/Kode Laporan')
                     ->weight('semibold')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('report_type')
+                TextColumn::make('report_type')
                     ->label('Tipe Laporan')
                     ->formatStateUsing(fn (string $state): string => match ($state) {
                         'inflow' => 'Uang Masuk',
@@ -38,22 +41,22 @@ class ReportsTable
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('start_date')
+                TextColumn::make('start_date')
                     ->label('Dari Tanggal')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('end_date')
+                TextColumn::make('end_date')
                     ->label('Sampai Tanggal')
                     ->date()
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('updated_at')
+                TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -61,21 +64,21 @@ class ReportsTable
             ->defaultSort('created_at', 'desc')
             ->filters([])
             ->actions([
-                Actions\Action::make('download')
+                Action::make('download')
                     ->label('Download')
                     ->icon('heroicon-m-arrow-down-tray')
                     ->color('primary')
                     ->url(fn (Report $record) => route('reports.download', $record))
                     ->visible(fn () => true),
 
-                Actions\EditAction::make(),
+                EditAction::make(),
             ])
             ->emptyStateIcon('heroicon-o-banknotes')
             ->emptyStateHeading('Belum ada laporan keuangan')
             ->emptyStateDescription('Semua laporan keuangan yang kamu input akan tampil di sini.')
             ->bulkActions([
-                Actions\BulkActionGroup::make([
-                    Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

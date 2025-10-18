@@ -14,7 +14,7 @@ use App\Filament\Widgets;
 class Dashboard extends BaseDashboard
 {
     use HasFiltersForm;
-    
+
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-chart-pie';
 
     public function filtersForm(Schema $schema): Schema
@@ -42,7 +42,7 @@ class Dashboard extends BaseDashboard
                             ->default(now())
                             ->maxDate(now())
                             ->live()
-                            ->columnSpan(1),
+                            ->columns(1),
 
                         DatePicker::make('endDate')
                             ->label('Sampai')
@@ -50,13 +50,13 @@ class Dashboard extends BaseDashboard
                             ->default(now())
                             ->minDate(fn(Get $get) => $get('startDate') ?: now())
                             ->maxDate(now())
-                            ->live()
-                            ->columnSpan(1),
+                            ->live(),
                     ])
-                    ->columns(4),
+                    ->columnSpan(2)
+                    ->columns(2),
             ]);
     }
-    
+
     public function getWidgets(): array
     {
         return [

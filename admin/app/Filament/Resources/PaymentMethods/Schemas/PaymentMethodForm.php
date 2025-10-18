@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\PaymentMethods\Schemas;
 
-use Filament\Forms;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
 class PaymentMethodForm
@@ -11,17 +13,17 @@ class PaymentMethodForm
     {
         return $schema
             ->schema([
-                Forms\Components\TextInput::make('name')
+                TextInput::make('name')
                     ->label('Metode Pembayaran')
                     ->required()
                     ->maxLength(255),
 
-                Forms\Components\FileUpload::make('image')
+                FileUpload::make('image')
                     ->label('Icon Pembayaran')
                     ->image()
                     ->required(),
 
-                Forms\Components\Toggle::make('is_cash')
+                Toggle::make('is_cash')
                     ->label('Metode Pembayaran Cash')
                     ->required(),
             ]);

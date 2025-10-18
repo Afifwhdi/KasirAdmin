@@ -18,9 +18,7 @@ class ProductResource extends Resource
     protected static ?string $model = Product::class;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
-
     protected static string | \UnitEnum | null $navigationGroup = 'Master Data';
-
     protected static ?string $navigationLabel = 'Produk';
 
     public static function getEloquentQuery(): Builder
@@ -91,7 +89,7 @@ class ProductResource extends Resource
             ->setPaper('a4', 'portrait');
 
         return response()->streamDownload(
-            fn () => print($pdf->output()),
+            fn() => print($pdf->output()),
             'barcodes.pdf'
         );
     }
