@@ -39,13 +39,32 @@ class AuthService {
         throw new Error(error.message || 'Login failed');
       }
 
-      const data: AuthResponse = await response.json();
+      const result = await response.json();
       
-      // Simpan token dan user data
-      this.setToken(data.access_token);
-      this.setUser(data.user);
+      // Handle API response format: {status, message, data}
+      if (result.status === 'success' && result.data) {
+        const user: AuthUser = {
+          id: parseInt(result.data.id),
+          email: result.data.email,
+          name: result.data.name,
+          role: result.data.role,
+        };
+        
+        // Generate simple token dari user ID (karena API tidak return token)
+        // Untuk production, API harus return JWT token
+        const fakeToken = btoa(JSON.stringify({ id: user.id, email: user.email, timestamp: Date.now() }));
+        
+        // Simpan token dan user data
+        this.setToken(fakeToken);
+        this.setUser(user);
+        
+        return {
+          access_token: fakeToken,
+          user,
+        };
+      }
       
-      return data;
+      throw new Error(result.message || 'Login failed');
     } catch (error) {
       console.error('Login error:', error);
       throw error;
