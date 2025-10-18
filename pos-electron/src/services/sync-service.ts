@@ -12,6 +12,24 @@ export type ProgressCallback = (progress: {
   failed: number;
 }) => void;
 
+const MAX_RETRIES = 3;
+const REQUEST_TIMEOUT = 30000; // 30 seconds
+const MAX_PAGES = 100; // Safety limit untuk prevent infinite loop
+
+async function fetchWithTimeout(url: string, timeout = REQUEST_TIMEOUT) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    throw error;
+  }
+}
+
 export const syncService = {
   /**
    * Sync products dari server ke SQLite lokal
@@ -24,16 +42,33 @@ export const syncService = {
     const synced = [];
     const failed = [];
     let page = 1;
-    const limit = 100;
+    const limit = 50; // Reduced batch size untuk better memory management
     let totalProcessed = 0;
     let totalProducts = 0;
 
     try {
-      // Fetch semua produk dari server
-      while (true) {
-        const response = await productsApi.getAll({ page, limit });
+      // Fetch semua produk dari server dengan safety limit
+      while (page <= MAX_PAGES) {
+        let response;
+        let retries = 0;
         
-        if (!response.data || response.data.length === 0) {
+        // Retry logic dengan exponential backoff
+        while (retries < MAX_RETRIES) {
+          try {
+            response = await productsApi.getAll({ page, limit });
+            break;
+          } catch (error) {
+            retries++;
+            if (retries >= MAX_RETRIES) {
+              throw new Error(`Failed to fetch products after ${MAX_RETRIES} retries: ${error.message}`);
+            }
+            
+            // Exponential backoff
+            await new Promise(resolve => setTimeout(resolve, Math.pow(2, retries) * 1000));
+          }
+        }
+        
+        if (!response || !response.data || response.data.length === 0) {
           break;
         }
 
@@ -42,7 +77,7 @@ export const syncService = {
           totalProducts = response.meta.total;
         }
 
-        // Insert/Update ke SQLite
+        // Batch insert/update untuk better performance
         for (const product of response.data) {
           totalProcessed++;
           
@@ -58,6 +93,7 @@ export const syncService = {
               failed: failed.length
             });
           }
+          
           try {
             // Check apakah produk sudah ada (by ID atau unique identifier)
             const existing = await productService.getById(product.id);
@@ -88,12 +124,18 @@ export const syncService = {
             synced.push(product);
           } catch (error) {
             console.error('Failed to sync product:', product.id, error);
-            failed.push(product);
+            failed.push({ id: product.id, error: error.message });
           }
         }
 
         // Check jika masih ada page berikutnya
         if (response.meta && page >= response.meta.totalPages) {
+          break;
+        }
+        
+        // Safety check: jika totalPages tidak ada, break setelah 10 pages
+        if (!response.meta?.totalPages && page >= 10) {
+          console.warn('No totalPages metadata, stopping after 10 pages');
           break;
         }
         
@@ -103,7 +145,7 @@ export const syncService = {
       return { synced, failed };
     } catch (error) {
       console.error('Sync products error:', error);
-      throw error;
+      throw new Error(`Sync failed: ${error.message}`);
     }
   },
 

@@ -69,8 +69,16 @@ export const electronDB = {
 };
 
 export const productService = {
-  async getAll() {
-    return electronDB.query('SELECT * FROM products ORDER BY name ASC');
+  async getAll(limit = 500, offset = 0) {
+    return electronDB.query(
+      'SELECT * FROM products ORDER BY name ASC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+  },
+
+  async count() {
+    const result = await electronDB.get('SELECT COUNT(*) as total FROM products');
+    return result?.total || 0;
   },
 
   async getById(id: number) {
@@ -105,10 +113,10 @@ export const productService = {
     return electronDB.run('DELETE FROM products WHERE id = ?', [id]);
   },
 
-  async search(query: string) {
+  async search(query: string, limit = 50) {
     return electronDB.query(
-      'SELECT * FROM products WHERE name LIKE ? OR barcode LIKE ? ORDER BY name ASC',
-      [`%${query}%`, `%${query}%`]
+      'SELECT * FROM products WHERE name LIKE ? OR barcode LIKE ? ORDER BY name ASC LIMIT ?',
+      [`%${query}%`, `%${query}%`, limit]
     );
   },
 
@@ -120,8 +128,16 @@ export const productService = {
 };
 
 export const transactionService = {
-  async getAll() {
-    return electronDB.query('SELECT * FROM transactions ORDER BY created_at DESC');
+  async getAll(limit = 100, offset = 0) {
+    return electronDB.query(
+      'SELECT * FROM transactions ORDER BY created_at DESC LIMIT ? OFFSET ?',
+      [limit, offset]
+    );
+  },
+
+  async count() {
+    const result = await electronDB.get('SELECT COUNT(*) as total FROM transactions');
+    return result?.total || 0;
   },
 
   async getById(id: number) {
