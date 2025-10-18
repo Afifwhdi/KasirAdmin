@@ -1,6 +1,7 @@
 import { isElectron, productService, categoryService } from './electron-db';
 import { productsApi } from '@/features/products/services/api';
 import { API_CONFIG, API_ENDPOINTS } from '@/config/api';
+import { authService } from './auth-service';
 
 export type ProgressCallback = (progress: {
   type: 'products' | 'categories' | 'transactions';
@@ -19,9 +20,16 @@ const MAX_PAGES = 100; // Safety limit untuk prevent infinite loop
 async function fetchWithTimeout(url: string, timeout = REQUEST_TIMEOUT) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const authHeaders = authService.getAuthHeader();
   
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+      },
+    });
     clearTimeout(timeoutId);
     return response;
   } catch (error) {

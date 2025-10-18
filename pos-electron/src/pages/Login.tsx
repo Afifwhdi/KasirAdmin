@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { API_CONFIG, API_ENDPOINTS } from "@/config/api";
+import { authService } from "@/services/auth-service";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -35,54 +35,28 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      // Call API login
-      const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.AUTH_LOGIN}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Use authService untuk login
+      await authService.login({
+        email: formData.email,
+        password: formData.password,
+      });
+      
+      toast.success("Login berhasil!", {
+        icon: "✓",
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
         },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+        duration: 2000,
       });
 
-      const result = await response.json();
-
-      if (result.status === 'success') {
-        // Store user data
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userId", result.data.id.toString());
-        localStorage.setItem("username", result.data.name);
-        localStorage.setItem("userEmail", result.data.email);
-        
-        toast.success("Login berhasil!", {
-          icon: "✓",
-          style: {
-            background: '#10b981',
-            color: 'white',
-            border: 'none',
-          },
-          duration: 2000,
-        });
-
-        setTimeout(() => {
-          navigate("/");
-        }, 500);
-      } else {
-        toast.error(result.message || "Login gagal!", {
-          style: {
-            background: '#ef4444',
-            color: 'white',
-            border: 'none',
-          },
-          duration: 3000,
-        });
-        setIsLoading(false);
-      }
+      setTimeout(() => {
+        navigate("/");
+      }, 500);
     } catch (error) {
       console.error('Login error:', error);
-      toast.error("Gagal terhubung ke server. Pastikan API berjalan.", {
+      toast.error(error instanceof Error ? error.message : "Gagal terhubung ke server. Pastikan API berjalan.", {
         style: {
           background: '#ef4444',
           color: 'white',
