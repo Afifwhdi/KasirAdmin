@@ -3,6 +3,31 @@ import { AppService } from './app.service';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 
+interface SettingsRow {
+  name: string;
+  address: string;
+  phone: string;
+  logo: string;
+  print_via_bluetooth: number;
+  name_printer_local: string;
+}
+
+interface ProductRow {
+  id: number;
+  name: string;
+  price: number;
+  stock: number;
+  barcode: string | null;
+  is_plu_enabled: number;
+  category_id: number | null;
+  category_name: string | null;
+}
+
+interface CategoryRow {
+  id: number;
+  name: string;
+}
+
 @Controller()
 export class AppController {
   constructor(
@@ -18,15 +43,6 @@ export class AppController {
   @Get('settings')
   async getSettings() {
     try {
-      interface SettingsRow {
-        name: string;
-        address: string;
-        phone: string;
-        logo: string;
-        print_via_bluetooth: number;
-        name_printer_local: string;
-      }
-
       const result = await this.dataSource.query<SettingsRow[]>(
         'SELECT name, address, phone, logo, print_via_bluetooth, name_printer_local FROM settings LIMIT 1',
       );
@@ -54,31 +70,6 @@ export class AppController {
   @Get('bootstrap')
   async getBootstrap() {
     try {
-      interface ProductRow {
-        id: number;
-        name: string;
-        price: number;
-        stock: number;
-        barcode: string | null;
-        is_plu_enabled: number;
-        category_id: number | null;
-        category_name: string | null;
-      }
-
-      interface CategoryRow {
-        id: number;
-        name: string;
-      }
-
-      interface SettingsRow {
-        name: string;
-        address: string;
-        phone: string;
-        logo: string;
-        print_via_bluetooth: number;
-        name_printer_local: string;
-      }
-
       const [products, categories, settings] = await Promise.all([
         this.dataSource.query<ProductRow[]>(`
           SELECT 
