@@ -6,9 +6,9 @@ Full-stack Point of Sale (POS) system dengan offline-first Electron desktop app,
 
 ```
 KasirAdmin/
-├── admin/         # Laravel Filament Admin Dashboard
-├── api/           # NestJS REST API Backend
-└── pos-electron/  # Electron Desktop POS App (Offline-First)
+├── admin/          # Laravel Filament Admin Dashboard
+├── api/            # NestJS REST API Backend
+└── kasir-desktop/  # Electron Desktop POS App (Offline-First)
 ```
 
 ## 🚀 Tech Stack
@@ -33,7 +33,7 @@ KasirAdmin/
   - Transaction Sync
   - Authentication
 
-### POS Desktop App (`pos-electron/`)
+### POS Desktop App (`kasir-desktop/`)
 - **Framework**: Electron + React + TypeScript
 - **Database**: SQLite (Offline)
 - **UI**: shadcn/ui + Tailwind CSS
@@ -72,7 +72,7 @@ API: http://localhost:3000
 
 **Development:**
 ```bash
-cd pos-electron
+cd kasir-desktop
 npm install
 npm run dev              # Web mode
 npm run electron:dev     # Electron mode
@@ -83,13 +83,12 @@ npm run electron:dev     # Electron mode
 npm run electron:build:win    # Build Windows installer
 ```
 
-Installer output: `pos-electron/release/POS System Setup 1.0.0.exe`
+Installer output: `kasir-desktop/release/POS System Setup 1.0.0.exe`
 
 ## 📖 Documentation
 
-### POS Electron App
-- **Setup Guide**: [`pos-electron/README.md`](pos-electron/README.md)
-- **Distribution Guide**: [`pos-electron/DISTRIBUSI.md`](pos-electron/DISTRIBUSI.md)
+### Kasir Desktop App
+- **Setup Guide**: [`kasir-desktop/README.md`](kasir-desktop/README.md)
 
 ### Admin & API
 - See individual README files in each directory
@@ -132,7 +131,7 @@ Installer output: `pos-electron/release/POS System Setup 1.0.0.exe`
 Each folder has `.env.example` - copy and configure:
 - `admin/.env` - Laravel config
 - `api/.env` - NestJS config
-- `pos-electron/.env` - API base URL
+- `kasir-desktop/.env` - API base URL
 
 ## 📦 Deployment
 
@@ -155,7 +154,7 @@ npm run start:prod
 ### POS Desktop App
 Build installer and distribute `.exe` file:
 ```bash
-cd pos-electron
+cd kasir-desktop
 npm run electron:build:win
 ```
 

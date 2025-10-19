@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository, IsNull } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Transaction } from './entities/transaction.entity';
 import { TransactionItem } from './entities/transaction_item.entity';
 import { PaymentMethod } from './entities/payment-method.entity';
@@ -65,12 +65,24 @@ export class TransactionsService {
     // Get total count
     const total = await queryBuilder.getCount();
 
-    // Get paginated data
+    interface RawTransactionRow {
+      id: number;
+      transaction_number: string;
+      name: string | null;
+      total: number;
+      cash_received: number;
+      change_amount: number;
+      created_at: Date;
+      status: string;
+      payment_method_id: number;
+      payment_method_name: string | null;
+    }
+
     const rows = await queryBuilder
       .orderBy('trx.created_at', 'DESC')
       .limit(limit)
       .offset(skip)
-      .getRawMany();
+      .getRawMany<RawTransactionRow>();
 
     const data = rows.map((row) => ({
       id: row.id,
@@ -105,8 +117,8 @@ export class TransactionsService {
   }
 
   async findOne(id: number) {
-    const trx = await this.transactionRepo.findOne({ 
-      where: { id } 
+    const trx = await this.transactionRepo.findOne({
+      where: { id },
     });
     if (!trx) throw new BadRequestException('Transaksi tidak ditemukan');
 
@@ -154,8 +166,8 @@ export class TransactionsService {
     try {
       // Buat transaksi
       const transaction = this.transactionRepo.create({
-        payment_method_id: dto.payment_method_id!,
-        transaction_number: dto.transaction_number!,
+        payment_method_id: dto.payment_method_id,
+        transaction_number: dto.transaction_number,
         name: dto.name || 'Umum',
         total: dto.total,
         cash_received: dto.cash_received,
@@ -219,8 +231,8 @@ export class TransactionsService {
     id: number,
     status: 'pending' | 'paid' | 'cancelled' | 'refunded',
   ) {
-    const transaction = await this.transactionRepo.findOne({ 
-      where: { id } 
+    const transaction = await this.transactionRepo.findOne({
+      where: { id },
     });
     if (!transaction) {
       throw new BadRequestException('Transaksi tidak ditemukan');
@@ -277,15 +289,17 @@ export class TransactionsService {
   }
 
   async payBon(id: number, cashReceived: number, changeAmount: number) {
-    const transaction = await this.transactionRepo.findOne({ 
-      where: { id } 
+    const transaction = await this.transactionRepo.findOne({
+      where: { id },
     });
     if (!transaction) {
       throw new BadRequestException('Transaksi tidak ditemukan');
     }
 
     if (transaction.status !== 'pending') {
-      throw new BadRequestException('Hanya transaksi pending yang bisa dibayar');
+      throw new BadRequestException(
+        'Hanya transaksi pending yang bisa dibayar',
+      );
     }
 
     // Update transaksi: set status paid, cash_received, change_amount

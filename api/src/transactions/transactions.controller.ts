@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Patch, Param, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  Query,
+} from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 
@@ -44,6 +52,10 @@ export class TransactionsController {
     @Param('id') id: string,
     @Body() body: { cash_received: number; change_amount: number },
   ) {
-    return this.transactionsService.payBon(+id, body.cash_received, body.change_amount);
+    return this.transactionsService.payBon(
+      +id,
+      body.cash_received,
+      body.change_amount,
+    );
   }
 }

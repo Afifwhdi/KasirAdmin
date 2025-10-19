@@ -3,7 +3,6 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Middleware\HandleCors;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -15,23 +14,19 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->append(HandleCors::class);
-        
+
         // Trust all proxies (untuk production sesuaikan dengan proxy yang digunakan)
         $middleware->trustProxies(at: '*');
-        
+
         // Exclude CSRF untuk API routes
         $middleware->validateCsrfTokens(except: [
             'api/*',
         ]);
-        
+
         // Register API token middleware alias
         $middleware->alias([
             'api.token' => \App\Http\Middleware\ValidateApiToken::class,
         ]);
-    })
-
-    ->withSchedule(function (Schedule $schedule) {
-        $schedule->command('redis:cleanup')->dailyAt('00:00');
     })
 
     ->withExceptions(function (Exceptions $exceptions) {
