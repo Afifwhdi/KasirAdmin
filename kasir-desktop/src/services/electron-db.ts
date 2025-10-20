@@ -163,19 +163,37 @@ export const transactionService = {
       status,
       customer_name,
     } = transaction;
-    return electronDB.run(
-      "INSERT INTO transactions (uuid, total, payment_method, payment_amount, change_amount, items, status, customer_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [
-        uuid,
-        total,
-        payment_method,
-        payment_amount,
-        change_amount,
-        JSON.stringify(items),
-        status || "paid",
-        customer_name || "",
-      ]
-    );
+
+    // Check if transaction with same UUID already exists
+    const existing = await this.getByUuid(uuid as string);
+    if (existing) {
+      console.warn(`⚠️  Transaction with UUID ${uuid} already exists in local database`);
+      throw new Error(`Transaction with UUID ${uuid} already exists`);
+    }
+
+    // Validate required fields
+    if (!uuid || !total || typeof total !== 'number') {
+      throw new Error('Missing required fields: uuid and total are required');
+    }
+
+    try {
+      return electronDB.run(
+        "INSERT INTO transactions (uuid, total, payment_method, payment_amount, change_amount, items, status, customer_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          uuid,
+          total,
+          payment_method || "cash",
+          payment_amount || 0,
+          change_amount || 0,
+          JSON.stringify(items || []),
+          status || "paid",
+          customer_name || "",
+        ]
+      );
+    } catch (error) {
+      console.error('Failed to create transaction in local database:', error);
+      throw new Error(`Failed to create transaction: ${error.message || error}`);
+    }
   },
 
   async markSynced(id: number) {
@@ -208,6 +226,56 @@ export const transactionService = {
       "UPDATE transactions SET payment_amount = ?, change_amount = ?, status = ?, synced = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
       [cashReceived, changeAmount, "paid", id]
     );
+  },
+
+  // Database maintenance methods
+  async findDuplicates() {
+    return electronDB.query(
+      "SELECT uuid, COUNT(*) as count FROM transactions GROUP BY uuid HAVING count > 1"
+    );
+  },
+
+  async removeDuplicates() {
+    // Keep the first occurrence, remove others
+    const duplicates = await this.findDuplicates();
+    let removedCount = 0;
+
+    for (const dup of duplicates as any[]) {
+      const transactions = await electronDB.query(
+        "SELECT id FROM transactions WHERE uuid = ? ORDER BY created_at ASC",
+        [dup.uuid]
+      ) as any[];
+
+      // Remove all except the first one
+      for (let i = 1; i < transactions.length; i++) {
+        await electronDB.run(
+          "DELETE FROM transactions WHERE id = ?",
+          [transactions[i].id]
+        );
+        removedCount++;
+      }
+    }
+
+    console.log(`\ud83d\uddd1\ufe0f  Removed ${removedCount} duplicate transactions`);
+    return removedCount;
+  },
+
+  async resetSyncStatus() {
+    return electronDB.run("UPDATE transactions SET synced = 0");
+  },
+
+  async getSyncStats() {
+    const total = await this.count();
+    const unsynced = await electronDB.query(
+      "SELECT COUNT(*) as count FROM transactions WHERE synced = 0"
+    );
+    const duplicates = await this.findDuplicates();
+    
+    return {
+      total_transactions: total,
+      unsynced_count: (unsynced as any[])[0]?.count || 0,
+      duplicate_uuids: (duplicates as any[]).length,
+    };
   },
 };
 
