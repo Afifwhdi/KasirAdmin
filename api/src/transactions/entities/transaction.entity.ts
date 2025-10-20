@@ -15,7 +15,7 @@ export class Transaction {
   @Column({ type: 'bigint', unsigned: true })
   payment_method_id!: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, unique: true })
   transaction_number!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
@@ -32,8 +32,8 @@ export class Transaction {
   change_amount!: number;
 
   @Column({
-    type: 'enum',
-    enum: ['pending', 'paid', 'cancelled', 'refunded'],
+    type: 'varchar',
+    length: 255,
     default: 'paid',
   })
   status!: 'pending' | 'paid' | 'cancelled' | 'refunded';

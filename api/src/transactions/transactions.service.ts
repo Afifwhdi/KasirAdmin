@@ -159,30 +159,74 @@ export class TransactionsService {
   }
 
   async create(dto: CreateTransactionDto) {
+    console.log(`[CREATE] Incoming transaction: ${dto.transaction_number}, status: ${dto.status}`);
+    
+    // CRITICAL: Check if transaction exists FIRST, outside transaction scope
+    let existingTransaction = await this.transactionRepo.findOne({
+      where: { transaction_number: dto.transaction_number },
+    });
+
+    console.log(`[CREATE] Existing transaction found: ${!!existingTransaction}`);
+    if (existingTransaction) {
+      console.log(`[CREATE] Will UPDATE transaction ID: ${existingTransaction.id}, current status: ${existingTransaction.status}`);
+    } else {
+      console.log(`[CREATE] Will CREATE new transaction`);
+    }
+
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
-      // Buat transaksi
-      const transaction = this.transactionRepo.create({
-        payment_method_id: dto.payment_method_id,
-        transaction_number: dto.transaction_number,
-        name: dto.name || 'Umum',
-        total: dto.total,
-        cash_received: dto.cash_received,
-        change_amount: dto.change_amount,
-        status: dto.status || 'paid',
-        created_at: new Date(),
-        updated_at: new Date(),
-      });
+      // If exists, lock it for update within transaction
+      if (existingTransaction) {
+        existingTransaction = await queryRunner.manager
+          .createQueryBuilder(Transaction, 'trx')
+          .where('trx.transaction_number = :transaction_number', {
+            transaction_number: dto.transaction_number,
+          })
+          .setLock('pessimistic_write')
+          .getOne();
+      }
 
-      const savedTransaction = await queryRunner.manager.save(
-        Transaction,
-        transaction,
-      );
+      let savedTransaction: Transaction;
 
-      // Simpan transaction items dan kurangi stock
+      if (existingTransaction) {
+        existingTransaction.payment_method_id = dto.payment_method_id;
+        existingTransaction.name = dto.name || 'Umum';
+        existingTransaction.total = dto.total;
+        existingTransaction.cash_received = dto.cash_received;
+        existingTransaction.change_amount = dto.change_amount;
+        existingTransaction.status = dto.status || existingTransaction.status;
+        existingTransaction.updated_at = new Date();
+
+        savedTransaction = await queryRunner.manager.save(
+          Transaction,
+          existingTransaction,
+        );
+
+        await queryRunner.manager.delete(TransactionItem, {
+          transaction_id: savedTransaction.id,
+        });
+      } else {
+        const transaction = this.transactionRepo.create({
+          payment_method_id: dto.payment_method_id,
+          transaction_number: dto.transaction_number,
+          name: dto.name || 'Umum',
+          total: dto.total,
+          cash_received: dto.cash_received,
+          change_amount: dto.change_amount,
+          status: dto.status || 'paid',
+          created_at: new Date(),
+          updated_at: new Date(),
+        });
+
+        savedTransaction = await queryRunner.manager.save(
+          Transaction,
+          transaction,
+        );
+      }
+
       for (const item of dto.items) {
         const transactionItem = this.transactionItemRepo.create({
           transaction_id: savedTransaction.id,
@@ -196,25 +240,28 @@ export class TransactionsService {
         });
 
         await queryRunner.manager.save(TransactionItem, transactionItem);
-
-        // Kurangi stock produk
-        await queryRunner.manager.decrement(
-          Product,
-          { id: item.product_id },
-          'stock',
-          item.quantity,
-        );
+        
+        // CRITICAL: Only decrement stock on NEW transaction, not on UPDATE
+        if (!existingTransaction) {
+          await queryRunner.manager.decrement(
+            Product,
+            { id: item.product_id },
+            'stock',
+            item.quantity,
+          );
+        }
       }
 
       await queryRunner.commitTransaction();
 
       return {
         status: 'success',
-        message: 'Transaction created successfully',
+        message: existingTransaction ? 'Transaction updated successfully' : 'Transaction created successfully',
         data: {
           id: savedTransaction.id,
           transaction_number: savedTransaction.transaction_number,
           total: savedTransaction.total,
+          updated: !!existingTransaction,
         },
       };
     } catch (error) {
@@ -243,18 +290,15 @@ export class TransactionsService {
     await queryRunner.startTransaction();
 
     try {
-      // Update status transaksi
       transaction.status = status;
       transaction.updated_at = new Date();
       await queryRunner.manager.save(Transaction, transaction);
 
-      // Jika refund, kembalikan stock produk
       if (status === 'refunded') {
         const transactionItems = await this.transactionItemRepo.find({
           where: { transaction_id: id },
         });
 
-        // Loop dan kembalikan stock untuk setiap produk
         for (const item of transactionItems) {
           await queryRunner.manager.increment(
             Product,
@@ -302,7 +346,6 @@ export class TransactionsService {
       );
     }
 
-    // Update transaksi: set status paid, cash_received, change_amount
     transaction.status = 'paid';
     transaction.cash_received = cashReceived;
     transaction.change_amount = changeAmount;
