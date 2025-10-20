@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -97,7 +97,9 @@ export const PaymentModal = ({
       <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="text-xl">Penerimaan Pembayaran</DialogTitle>
-          <p className="text-sm text-muted-foreground">No. Order: {orderNumber}</p>
+          <DialogDescription>
+            Pilih metode pembayaran dan masukkan nominal untuk menyelesaikan transaksi No. {orderNumber}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 mt-4">
