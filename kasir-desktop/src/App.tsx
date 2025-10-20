@@ -4,7 +4,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
+import { isElectron } from "@/lib/utils";
+import { transactionService } from "@/services/electron-db";
 
 // LAZY LOAD PAGES
 const Login = lazy(() => import("./pages/Login"));
@@ -34,6 +36,22 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
+  // Cleanup old failed sync transactions on app start (Electron only)
+  useEffect(() => {
+    const cleanupOldSyncs = async () => {
+      if (isElectron()) {
+        try {
+          // Clear transactions older than 1 day that failed to sync
+          await transactionService.clearOldFailedSyncs(1);
+        } catch (error) {
+          console.error('Failed to cleanup old sync transactions:', error);
+        }
+      }
+    };
+
+    cleanupOldSyncs();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

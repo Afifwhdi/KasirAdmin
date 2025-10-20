@@ -149,6 +149,14 @@ export const transactionService = {
   },
 
   async getUnsynced() {
+    // Only get unsynced transactions from today to avoid old failed syncs
+    return electronDB.query(
+      "SELECT * FROM transactions WHERE synced = 0 AND DATE(created_at) >= DATE('now') ORDER BY created_at ASC"
+    );
+  },
+
+  async getAllUnsynced() {
+    // Get all unsynced transactions (including old ones) for manual cleanup
     return electronDB.query("SELECT * FROM transactions WHERE synced = 0 ORDER BY created_at ASC");
   },
 
@@ -178,7 +186,7 @@ export const transactionService = {
 
     try {
       return electronDB.run(
-        "INSERT INTO transactions (uuid, total, payment_method, payment_amount, change_amount, items, status, customer_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO transactions (uuid, total, payment_method, payment_amount, change_amount, items, status, customer_name, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           uuid,
           total,
@@ -188,6 +196,8 @@ export const transactionService = {
           JSON.stringify(items || []),
           status || "paid",
           customer_name || "",
+          new Date().toISOString(),
+          new Date().toISOString(),
         ]
       );
     } catch (error) {
@@ -262,6 +272,16 @@ export const transactionService = {
 
   async resetSyncStatus() {
     return electronDB.run("UPDATE transactions SET synced = 0");
+  },
+
+  async clearOldFailedSyncs(daysOld = 1) {
+    // Clear transactions older than X days that failed to sync
+    const result = await electronDB.run(
+      "DELETE FROM transactions WHERE synced = 0 AND created_at < datetime('now', '-' || ? || ' days')",
+      [daysOld]
+    );
+    console.log(`🗑️ Cleared ${result.changes || 0} old failed sync transactions`);
+    return result.changes || 0;
   },
 
   async getSyncStats() {

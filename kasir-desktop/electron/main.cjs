@@ -9,6 +9,9 @@ const path = require("path");
 const fs = require("fs");
 const memoryMonitor = require("./memory-monitor.cjs");
 
+// Disable autofill warnings
+app.commandLine.appendSwitch('--disable-features', 'Autofill');
+
 let mainWindow;
 let db;
 const preparedStatements = new Map();
