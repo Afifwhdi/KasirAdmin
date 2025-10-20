@@ -7,13 +7,10 @@ build
 release
 
 # Environment files - keep templates only
-.env
-.env.local
+.env*
 
 # Keep environment templates
 !.env.example
-!.env.development
-!.env.production
 
 # Electron
 out
