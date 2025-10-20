@@ -7,19 +7,23 @@
   "type": "module",
   "author": "KasirAdmin",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "vite --mode development",
+    "dev:prod": "vite --mode production",
+    "build": "vite build --mode production",
     "build:dev": "vite build --mode development",
-    "build:analyze": "vite build && npx vite-bundle-visualizer",
+    "build:analyze": "vite build --mode production && npx vite-bundle-visualizer",
     "lint": "eslint .",
     "preview": "vite preview",
     "electron": "electron . --js-flags=\"--expose-gc\"",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:5173 && electron . --js-flags=\\\"--expose-gc\\\"\"",
+    "electron:dev:prod": "concurrently \"npm run dev:prod\" \"wait-on http://localhost:5173 && electron . --js-flags=\\\"--expose-gc\\\"\"",
     "electron:build": "npm run build && electron-builder",
     "electron:build:win": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64",
+    "electron:build:dev": "npm run build:dev && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --win --x64",
     "pack": "electron-builder --dir",
     "dist": "npm run build && electron-builder",
-    "postinstall": "electron-rebuild -f -w better-sqlite3"
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "debug:transactions": "electron debug-transactions.js"
   },
   "build": {
     "appId": "com.kasiradmin.desktop",

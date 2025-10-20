@@ -3,10 +3,10 @@
  * Deteksi memory leaks dan trigger cleanup otomatis
  */
 
-const { app } = require('electron');
+const { app } = require("electron");
 
-const MEMORY_THRESHOLD_MB = 500; // Alert jika memory > 500MB
-const CHECK_INTERVAL_MS = 60000; // Check setiap 1 menit
+const MEMORY_THRESHOLD_MB = 500;
+const CHECK_INTERVAL_MS = 60000;
 
 class MemoryMonitor {
   constructor() {
@@ -16,11 +16,11 @@ class MemoryMonitor {
 
   start() {
     if (this.isMonitoring) {
-      console.warn('[Memory Monitor] Already monitoring');
+      console.warn("[Memory Monitor] Already monitoring");
       return;
     }
 
-    console.log('[Memory Monitor] Started');
+    console.log("[Memory Monitor] Started");
     this.isMonitoring = true;
 
     this.intervalId = setInterval(() => {
@@ -30,13 +30,11 @@ class MemoryMonitor {
 
       console.log(`[Memory Monitor] Heap: ${heapUsedMB}MB | RSS: ${rssMB}MB`);
 
-      // Trigger warning jika memory usage tinggi
       if (heapUsedMB > MEMORY_THRESHOLD_MB) {
         console.warn(`[Memory Monitor] HIGH MEMORY USAGE: ${heapUsedMB}MB`);
-        
-        // Force garbage collection jika tersedia
+
         if (global.gc) {
-          console.log('[Memory Monitor] Triggering manual GC...');
+          console.log("[Memory Monitor] Triggering manual GC...");
           global.gc();
         }
       }
@@ -49,7 +47,7 @@ class MemoryMonitor {
       this.intervalId = null;
     }
     this.isMonitoring = false;
-    console.log('[Memory Monitor] Stopped');
+    console.log("[Memory Monitor] Stopped");
   }
 
   getMemoryInfo() {
@@ -65,11 +63,11 @@ class MemoryMonitor {
 
 const memoryMonitor = new MemoryMonitor();
 
-app.on('ready', () => {
+app.on("ready", () => {
   memoryMonitor.start();
 });
 
-app.on('before-quit', () => {
+app.on("before-quit", () => {
   memoryMonitor.stop();
 });
 
