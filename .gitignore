@@ -24,6 +24,13 @@ package-lock.json
 .cache/
 .eslintcache
 
+# --- ELECTRON BUILD ---
+release/
+release-final/
+*.exe
+*.dmg
+*.AppImage
+
 # --- LARAVEL / PHP (Filament Admin) ---
 /vendor/
 /storage/*.key

@@ -12,6 +12,9 @@ const memoryMonitor = require("./memory-monitor.cjs");
 // Disable autofill warnings
 app.commandLine.appendSwitch('--disable-features', 'Autofill');
 
+// Force userData path to use correct app name
+app.setPath('userData', path.join(app.getPath('appData'), 'kasir-desktop'));
+
 let mainWindow;
 let db;
 const preparedStatements = new Map();

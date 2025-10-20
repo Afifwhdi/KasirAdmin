@@ -28,6 +28,7 @@
   "build": {
     "appId": "com.kasiradmin.desktop",
     "productName": "Kasir Desktop",
+    "icon": "build/icon.png",
     "directories": {
       "buildResources": "public",
       "output": "release"
@@ -45,6 +46,7 @@
       "target": [
         "nsis"
       ],
+      "icon": "build/icon.png",
       "sign": null
     },
     "nsis": {
