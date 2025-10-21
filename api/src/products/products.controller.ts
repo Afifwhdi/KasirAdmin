@@ -30,6 +30,7 @@ export class ProductsController {
       data: result.data.map((p) => ({
         id: p.id,
         name: p.name,
+        stock: Number(p.stock),
         price: Number(p.price),
         barcode: p.barcode,
         is_plu_enabled: Boolean(p.is_plu_enabled),

@@ -43,6 +43,7 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
   const [isSyncingDownload, setIsSyncingDownload] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [dbPath, setDbPath] = useState<string>("");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showProgressDialog, setShowProgressDialog] = useState(false);
   const [showDbSettingsDialog, setShowDbSettingsDialog] = useState(false);
   const [syncProgress, setSyncProgress] = useState({
@@ -73,6 +74,61 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  // Monitor online/offline status with server ping test
+  useEffect(() => {
+    // Test actual connection to server using products endpoint (guaranteed to work)
+    const checkServerConnection = async () => {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+        // Use products endpoint with limit=1 (lightweight ping)
+        const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.PRODUCTS}?page=1&limit=1`, {
+          method: "GET",
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        const isConnected = response.ok;
+        console.log(`[Header] Server ping: ${isConnected ? "ONLINE ✓" : "OFFLINE ✗"} (status: ${response.status})`);
+        setIsOnline(isConnected);
+        return isConnected;
+      } catch (error) {
+        const err = error as Error;
+        console.log(`[Header] Server ping: OFFLINE ✗ (${err.name}: ${err.message})`);
+        setIsOnline(false);
+        return false;
+      }
+    };
+
+    // Initial check
+    checkServerConnection();
+
+    // Periodic check every 10 seconds
+    const intervalId = setInterval(checkServerConnection, 10000);
+
+    // Also listen to browser online/offline events as backup
+    const handleOnline = () => {
+      console.log("[Header] Browser event: ONLINE");
+      checkServerConnection(); // Verify with server ping
+    };
+
+    const handleOffline = () => {
+      console.log("[Header] Browser event: OFFLINE");
+      setIsOnline(false);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, []);
 
   // Check printer status on mount
@@ -110,7 +166,15 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
   };
 
   const handleSyncToServer = async () => {
-    if (isSyncing || !isElectron()) return;
+    if (isSyncing || !isElectron() || !isOnline) {
+      if (!isOnline) {
+        toast.error("Tidak bisa sync saat offline. Nyalakan internet terlebih dahulu.", {
+          icon: "❌",
+          duration: 3000,
+        });
+      }
+      return;
+    }
 
     setIsSyncing(true);
     toast.info("Memulai sinkronisasi data...", {
@@ -164,7 +228,15 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
   };
 
   const handleSyncFromServer = async () => {
-    if (isSyncingDownload || !isElectron()) return;
+    if (isSyncingDownload || !isElectron() || !isOnline) {
+      if (!isOnline) {
+        toast.error("Tidak bisa download data saat offline. Nyalakan internet terlebih dahulu.", {
+          icon: "❌",
+          duration: 3000,
+        });
+      }
+      return;
+    }
 
     setIsSyncingDownload(true);
     setShowProgressDialog(true);
@@ -206,7 +278,11 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         progress: 100,
         currentItem: "",
         status: "success",
-        message: `Berhasil: ${result.products.synced.length} produk, ${result.categories.synced.length} kategori, ${result.transactions.synced.length} transaksi. ${totalFailed > 0 ? `Gagal: ${totalFailed}` : ""}`,
+        message: `Berhasil: ${result.products.synced.length} produk, ${
+          result.categories.synced.length
+        } kategori, ${result.transactions.synced.length} transaksi. ${
+          totalFailed > 0 ? `Gagal: ${totalFailed}` : ""
+        }`,
         stats: {
           total: totalSynced + totalFailed,
           current: totalSynced + totalFailed,
@@ -468,25 +544,52 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
             <span className="font-mono font-semibold text-lg">{formatTime(currentTime)}</span>
           </div>
 
-          {/* Offline Mode Indicator & Sync Menu */}
+          {/* Online/Offline Status Indicator & Sync Menu */}
           {isElectron() && (
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
-                <Database className="w-4 h-4 text-blue-500" />
-                <span className="text-xs font-semibold text-blue-500">OFFLINE</span>
+              {/* Status Badge */}
+              <div
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+                  isOnline
+                    ? "bg-green-500/10 border border-green-500/20"
+                    : "bg-red-500/10 border border-red-500/20"
+                }`}
+              >
+                <Database className={`w-4 h-4 ${isOnline ? "text-green-500" : "text-red-500"}`} />
+                <span
+                  className={`text-xs font-semibold ${
+                    isOnline ? "text-green-500" : "text-red-500"
+                  }`}
+                >
+                  {isOnline ? "ONLINE" : "OFFLINE"}
+                </span>
               </div>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    disabled={isSyncing || isSyncingDownload}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 hover:bg-green-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Sinkronisasi data"
+                    disabled={!isOnline || isSyncing || isSyncingDownload}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      isOnline && !isSyncing && !isSyncingDownload
+                        ? "bg-green-500/10 border-green-500/20 hover:bg-green-500/20"
+                        : "bg-gray-500/10 border-gray-500/20"
+                    }`}
+                    title={isOnline ? "Sinkronisasi data" : "Tidak bisa sync saat offline"}
                   >
                     <RefreshCw
-                      className={`w-4 h-4 text-green-500 ${isSyncing || isSyncingDownload ? "animate-spin" : ""}`}
+                      className={`w-4 h-4 ${
+                        isOnline && !isSyncing && !isSyncingDownload
+                          ? "text-green-500"
+                          : "text-gray-500"
+                      } ${isSyncing || isSyncingDownload ? "animate-spin" : ""}`}
                     />
-                    <span className="text-xs font-semibold text-green-500">
+                    <span
+                      className={`text-xs font-semibold ${
+                        isOnline && !isSyncing && !isSyncingDownload
+                          ? "text-green-500"
+                          : "text-gray-500"
+                      }`}
+                    >
                       {isSyncing ? "Upload..." : isSyncingDownload ? "Download..." : "Sync"}
                     </span>
                   </button>

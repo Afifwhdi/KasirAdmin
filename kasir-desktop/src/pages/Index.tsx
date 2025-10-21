@@ -20,30 +20,29 @@ const Index = () => {
       }
 
       try {
-        // Check if first-time setup was completed
-        const setupDone = localStorage.getItem("pos_first_time_setup_done") === "true";
+        // Check if config exists (dbPath sudah di-set)
+        const hasConfig = await window.electronAPI!.app.hasConfig();
 
-        if (!setupDone) {
-          // Belum pernah setup sama sekali
+        if (!hasConfig) {
+          // Belum setup, tampilkan dialog
+          console.log("[Index] No config found, showing first time setup");
           setShowFirstTimeSetup(true);
           setIsCheckingSetup(false);
           return;
         }
 
-        // Check if database file exists
+        // Config ada, check apakah database file exists
         const dbExists = await window.electronAPI!.app.checkDbExists();
 
         if (!dbExists) {
           // Database hilang, minta setup ulang
-          localStorage.removeItem("pos_first_time_setup_done");
+          console.warn("[Index] Config exists but database missing, showing setup");
           setShowFirstTimeSetup(true);
           setIsCheckingSetup(false);
           return;
         }
 
-        // Database check removed - no more empty database alert
-        console.log("[Index] Setup check complete");
-
+        console.log("[Index] Setup check complete, database ready");
         setIsCheckingSetup(false);
       } catch (error) {
         console.error("Error checking setup:", error);
@@ -56,12 +55,23 @@ const Index = () => {
 
   const handleFirstTimeSetupComplete = async (dbPath: string) => {
     try {
-      await window.electronAPI!.app.setDbPath(dbPath);
-      localStorage.setItem("pos_first_time_setup_done", "true");
+      console.log("[Index] Setting database path:", dbPath);
+      
+      const result = await window.electronAPI!.app.setDbPath(dbPath);
+      
+      if (!result.success) {
+        toast.error(`Gagal setup database: ${result.message}`, {
+          icon: "❌",
+          duration: 4000,
+        });
+        return;
+      }
+
+      console.log("[Index] Database created at:", result.newPath);
       setShowFirstTimeSetup(false);
 
       // Download langsung setelah setup
-      toast.info("Setup berhasil! Memulai download data...", {
+      toast.success("Database berhasil dibuat! Memulai download data...", {
         icon: "📥",
         duration: 2000,
       });
@@ -72,7 +82,10 @@ const Index = () => {
       }, 500);
     } catch (error) {
       console.error("Setup error:", error);
-      toast.error("Gagal setup: " + (error as Error).message);
+      toast.error("Gagal setup: " + (error as Error).message, {
+        icon: "❌",
+        duration: 4000,
+      });
     }
   };
 
@@ -80,6 +93,8 @@ const Index = () => {
 
   const handleDownloadData = async () => {
     setIsDownloading(true);
+    console.log("📥 ========== DOWNLOAD DATA STARTED ==========");
+    
     toast.info("Memulai download data dari server...", {
       icon: "📥",
       duration: 2000,
@@ -87,14 +102,24 @@ const Index = () => {
 
     try {
       // Download products
-      await syncService.syncProductsFromServer();
+      console.log("📦 Step 1/3: Downloading products...");
+      toast.info("Mengunduh produk...", { icon: "📦", duration: 1500 });
+      const productsResult = await syncService.syncProductsFromServer();
+      console.log(`✅ Products synced: ${productsResult.synced.length} success, ${productsResult.failed.length} failed`);
 
       // Download categories
-      await syncService.syncCategoriesFromServer();
+      console.log("📂 Step 2/3: Downloading categories...");
+      toast.info("Mengunduh kategori...", { icon: "📂", duration: 1500 });
+      const categoriesResult = await syncService.syncCategoriesFromServer();
+      console.log(`✅ Categories synced: ${categoriesResult.synced.length} success, ${categoriesResult.failed.length} failed`);
 
       // Download transactions
-      await syncService.syncTransactionsFromServer();
+      console.log("💰 Step 3/3: Downloading transactions...");
+      toast.info("Mengunduh transaksi...", { icon: "💰", duration: 1500 });
+      const transactionsResult = await syncService.syncTransactionsFromServer();
+      console.log(`✅ Transactions synced: ${transactionsResult.synced.length} success, ${transactionsResult.failed.length} failed`);
 
+      console.log("✅ ========== DOWNLOAD COMPLETED ==========");
       toast.success("Data berhasil didownload! Aplikasi akan reload...", {
         icon: "✓",
         style: {
@@ -109,7 +134,7 @@ const Index = () => {
         window.location.reload();
       }, 2000);
     } catch (error) {
-      console.error("Download error:", error);
+      console.error("❌ Download error:", error);
       toast.error("Gagal download data: " + (error as Error).message, {
         icon: "❌",
         style: {

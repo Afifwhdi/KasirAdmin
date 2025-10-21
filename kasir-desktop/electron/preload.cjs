@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getDbPath: () => ipcRenderer.invoke('app:getDbPath'),
     checkDbExists: () => ipcRenderer.invoke('app:checkDbExists'),
     hasDbData: () => ipcRenderer.invoke('app:hasDbData'),
+    hasConfig: () => ipcRenderer.invoke('app:hasConfig'),
   },
   dialog: {
     selectFolder: () => ipcRenderer.invoke('dialog:selectFolder'),

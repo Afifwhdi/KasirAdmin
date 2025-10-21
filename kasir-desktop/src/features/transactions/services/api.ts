@@ -9,7 +9,7 @@ export interface CreateTransactionData {
   change_amount: number;
   status?: "pending" | "paid" | "cancelled" | "refunded";
   items: {
-    product_id: number;
+    product_id: string | number; // Can be UUID (string) or local ID (number)
     product_name_snapshot: string;
     quantity: number;
     price: number;
@@ -56,6 +56,12 @@ export const transactionsApi = {
   },
 
   async create(data: CreateTransactionData) {
+    console.log("[TransactionsAPI] Creating transaction:", {
+      transaction_number: data.transaction_number,
+      total: data.total,
+      items_count: data.items.length,
+    });
+
     const res = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -63,11 +69,41 @@ export const transactionsApi = {
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Gagal membuat transaksi: ${err}`);
+      let errorDetail = "";
+      let errorMessage = "";
+      
+      try {
+        const errorData = await res.json();
+        errorDetail = JSON.stringify(errorData, null, 2); // Pretty print
+        errorMessage = errorData.message || errorData.error || "Unknown error";
+        
+        // SUPER DETAILED LOG
+        console.error("❌❌❌ [TransactionsAPI] SYNC ERROR DETAIL ❌❌❌");
+        console.error("Status Code:", res.status);
+        console.error("Status Text:", res.statusText);
+        console.error("Error Message:", errorMessage);
+        console.error("Full Error Response:", errorData);
+        console.error("Request Payload:", data);
+        console.error("❌❌❌ END OF ERROR DETAIL ❌❌❌");
+      } catch {
+        errorDetail = await res.text();
+        errorMessage = errorDetail;
+        console.error("❌❌❌ [TransactionsAPI] SERVER ERROR (TEXT) ❌❌❌");
+        console.error("Status Code:", res.status);
+        console.error("Error Text:", errorDetail);
+        console.error("Request Payload:", data);
+        console.error("❌❌❌ END OF ERROR ❌❌❌");
+      }
+      
+      const error: any = new Error(`HTTP ${res.status}: ${errorMessage}`);
+      error.status = res.status;
+      error.response = errorDetail;
+      throw error;
     }
 
-    return res.json();
+    const result = await res.json();
+    console.log("[TransactionsAPI] Transaction created:", result.status);
+    return result;
   },
 
   async updateStatus(id: number, status: "pending" | "paid" | "cancelled" | "refunded") {

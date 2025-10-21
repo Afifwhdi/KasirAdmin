@@ -105,35 +105,37 @@ export const syncService = {
           }
 
           try {
-            // Check apakah produk sudah ada (by ID atau unique identifier)
-            const existing = await productService.getById(product.id);
+            // Use UUID (server ID) as unique identifier
+            const productUuid = product.id?.toString() || product.uuid || crypto.randomUUID();
+            
+            // Check apakah produk sudah ada (by UUID)
+            const existing = await productService.getByUuid(productUuid);
+
+            const productData = {
+              name: product.name,
+              price: product.price,
+              stock: product.stock || 0,
+              category: product.category_id?.toString() || "",
+              image: product.image || "",
+              barcode: product.barcode || "",
+            };
 
             if (existing) {
-              // Update
-              await productService.update(product.id, {
-                name: product.name,
-                price: product.price,
-                stock: product.stock || 0,
-                category: product.category_id?.toString() || "",
-                image: product.image || "",
-                barcode: product.barcode || "",
-              });
+              // Update existing product
+              console.log(`📝 Updating product: ${product.name} (UUID: ${productUuid}, Stock: ${product.stock})`);
+              await productService.update(existing.id, productData);
             } else {
-              // Insert
+              // Insert new product
+              console.log(`➕ Creating product: ${product.name} (UUID: ${productUuid}, Stock: ${product.stock})`);
               await productService.create({
-                uuid: product.uuid || crypto.randomUUID(),
-                name: product.name,
-                price: product.price,
-                stock: product.stock || 0,
-                category: product.category_id?.toString() || "",
-                image: product.image || "",
-                barcode: product.barcode || "",
+                uuid: productUuid,
+                ...productData,
               });
             }
 
             synced.push(product);
           } catch (error) {
-            console.error("Failed to sync product:", product.id, error);
+            console.error("❌ Failed to sync product:", product.id, error);
             failed.push({ id: product.id, error: error.message });
           }
         }
@@ -152,9 +154,12 @@ export const syncService = {
         page++;
       }
 
+      console.log(`\n✅ Sync products completed: ${synced.length} synced, ${failed.length} failed`);
+      console.log(`📦 Total products in database: ${await productService.count()}`);
+      
       return { synced, failed };
     } catch (error) {
-      console.error("Sync products error:", error);
+      console.error("❌ Sync products error:", error);
       throw new Error(`Sync failed: ${error.message}`);
     }
   },

@@ -41,6 +41,18 @@ export class ProductsService {
     const total = await queryBuilder.getCount();
 
     const products = await queryBuilder
+      .select([
+        'product.id',
+        'product.name',
+        'product.stock',
+        'product.price',
+        'product.barcode',
+        'product.is_plu_enabled',
+        'product.is_active',
+        'product.category_id',
+        'category.id',
+        'category.name',
+      ])
       .orderBy('product.id', 'ASC')
       .skip(skip)
       .take(limit)

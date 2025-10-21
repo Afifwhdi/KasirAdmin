@@ -9,6 +9,7 @@ interface ElectronAPI {
     getDataDir: () => Promise<string>;
     setDbPath: (path: string) => Promise<{ success: boolean; message: string; newPath: string }>;
     getDbPath: () => Promise<string>;
+    hasConfig: () => Promise<boolean>;
   };
   platform: string;
   isElectron: boolean;
@@ -65,6 +66,13 @@ export const electronDB = {
       throw new Error("Electron API not available");
     }
     return window.electronAPI!.app.getDbPath();
+  },
+
+  async hasConfig() {
+    if (!isElectron()) {
+      throw new Error("Electron API not available");
+    }
+    return window.electronAPI!.app.hasConfig();
   },
 };
 

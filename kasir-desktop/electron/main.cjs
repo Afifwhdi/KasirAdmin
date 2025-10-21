@@ -22,23 +22,35 @@ const preparedStatements = new Map();
 // Load custom DB path from config if exists
 const CONFIG_FILE = path.join(app.getPath("userData"), "config.json");
 let config = {};
+let DATA_DIR = null;
+let DB_PATH = null;
 
-try {
-  if (fs.existsSync(CONFIG_FILE)) {
-    config = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8"));
+function loadConfig() {
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      config = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8"));
+      console.log("Config loaded:", config);
+    } else {
+      console.log("No config file found, first time setup needed");
+    }
+  } catch (error) {
+    console.error("Failed to load config:", error);
   }
-} catch (error) {
-  console.error("Failed to load config:", error);
+
+  // Set DB path from config if exists
+  if (config.dbPath) {
+    DATA_DIR = config.dbPath;
+    DB_PATH = path.join(DATA_DIR, "pos.db");
+    console.log("Using custom DB path:", DB_PATH);
+  } else {
+    console.log("No DB path configured yet");
+  }
 }
 
-// Default DB location or custom from config
-const DATA_DIR =
-  config.dbPath || path.join(app.getPath("userData"), "POS_Data");
-const DB_PATH = path.join(DATA_DIR, "pos.db");
-
 function ensureDataDir() {
-  if (!fs.existsSync(DATA_DIR)) {
+  if (DATA_DIR && !fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
+    console.log("Created data directory:", DATA_DIR);
   }
 }
 
@@ -130,7 +142,13 @@ function createWindow() {
 }
 
 function initDatabase() {
+  if (!DATA_DIR || !DB_PATH) {
+    console.log("Database path not configured, skipping initialization");
+    return false;
+  }
+
   try {
+    ensureDataDir();
     const dbExists = fs.existsSync(DB_PATH);
     const Database = require("better-sqlite3");
     db = new Database(DB_PATH, {
@@ -211,18 +229,27 @@ function initDatabase() {
     db.exec("ANALYZE;");
 
     console.log("Database initialized at:", DB_PATH);
+    return true;
   } catch (error) {
     console.error("Database initialization error:", error);
     dialog.showErrorBox(
       "Database Error",
       `Failed to initialize database: ${error.message}`
     );
+    return false;
   }
 }
 
 app.whenReady().then(() => {
-  ensureDataDir();
-  initDatabase();
+  loadConfig();
+  
+  // Only init database if config exists
+  if (config.dbPath) {
+    initDatabase();
+  } else {
+    console.log("First time setup: database will be initialized after location selection");
+  }
+  
   createWindow();
 
   // Register global shortcuts for zoom
@@ -355,20 +382,37 @@ ipcMain.handle("app:getDataDir", async () => {
   return DATA_DIR;
 });
 
-// Set custom DB path
+// Set custom DB path and initialize database
 ipcMain.handle("app:setDbPath", async (event, newPath) => {
   try {
+    // Save config
     const newConfig = { ...config, dbPath: newPath };
     fs.writeFileSync(CONFIG_FILE, JSON.stringify(newConfig, null, 2));
+    config = newConfig;
 
-    return {
-      success: true,
-      message: "Database path updated. Restart aplikasi untuk apply perubahan.",
-      newPath,
-    };
+    // Update paths
+    DATA_DIR = newPath;
+    DB_PATH = path.join(DATA_DIR, "pos.db");
+
+    // Initialize database at new location
+    const success = initDatabase();
+
+    if (success) {
+      return {
+        success: true,
+        message: "Database lokasi berhasil di-set dan database dibuat!",
+        newPath: DB_PATH,
+      };
+    } else {
+      throw new Error("Failed to initialize database at new location");
+    }
   } catch (error) {
     console.error("Failed to set DB path:", error);
-    throw error;
+    return {
+      success: false,
+      message: `Error: ${error.message}`,
+      newPath: null,
+    };
   }
 });
 
@@ -379,7 +423,13 @@ ipcMain.handle("app:getDbPath", async () => {
 
 // Check if database file exists
 ipcMain.handle("app:checkDbExists", async () => {
+  if (!DB_PATH) return false;
   return fs.existsSync(DB_PATH);
+});
+
+// Check if config exists (first time setup)
+ipcMain.handle("app:hasConfig", async () => {
+  return fs.existsSync(CONFIG_FILE) && config.dbPath != null;
 });
 
 // Check if database has data (products or categories)

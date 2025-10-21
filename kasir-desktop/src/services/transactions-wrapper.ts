@@ -180,23 +180,34 @@ export const transactionsWrapper = {
           throw new Error(`Invalid transaction data after fix attempts: UUID=${!!validatedUuid}, Total=${validatedTotal}, Items=${validatedItems?.length || 0}`);
         }
 
+        // Ensure all items have valid product_id and required fields
+        const processedItems = (validatedItems as Record<string, unknown>[]).map((item, idx) => {
+          const productId = item.product_id || 1;
+          const productName = item.product_name || item.product_name_snapshot || `Product ${idx + 1}`;
+          const quantity = Number(item.quantity) || 1;
+          const price = Number(item.price) || 0;
+          const subtotal = Number(item.subtotal) || (price * quantity);
+          
+          return {
+            product_id: productId,
+            product_name_snapshot: productName,
+            quantity: quantity,
+            price: price,
+            subtotal: subtotal,
+            cost_price: Number(item.cost_price) || 0,
+            total_profit: Number(item.total_profit) || 0,
+          };
+        });
+
         const payload = {
           transaction_number: validatedUuid,
           name: tx.customer_name || "",
           payment_method_id: tx.payment_method === "cash" ? 1 : 2,
           total: validatedTotal,
-          cash_received: tx.payment_amount || 0,
-          change_amount: tx.change_amount || 0,
+          cash_received: Number(tx.payment_amount) || validatedTotal,
+          change_amount: Number(tx.change_amount) || 0,
           status: tx.status || "paid",
-          items: (validatedItems as Record<string, unknown>[]).map((item) => ({
-            product_id: item.product_id || 1,
-            product_name_snapshot: item.product_name || item.product_name_snapshot || "Unknown Product",
-            quantity: item.quantity || 1,
-            price: item.price || 0,
-            subtotal: item.subtotal || (item.price * item.quantity) || 0,
-            cost_price: item.cost_price || 0,
-            total_profit: item.total_profit || 0,
-          })),
+          items: processedItems,
         };
 
         log(`   📦 Payload for ${tx.uuid}:`, {
@@ -207,10 +218,24 @@ export const transactionsWrapper = {
           items_count: payload.items.length
         });
 
-        const result = await transactionsApi.create(payload);
+        let result;
+        try {
+          result = await transactionsApi.create(payload);
+        } catch (apiError) {
+          // Log full error details for debugging
+          const err = apiError as any;
+          logError(`   ❌ API Error for ${tx.uuid}:`, {
+            message: err.message,
+            status: err.status,
+            response: err.response,
+            payload: payload
+          });
+          throw new Error(`API call failed: ${err.message || 'Unknown error'}`);
+        }
         
         // CRITICAL: Validate server response before marking as synced
         if (!result || result.status !== 'success') {
+          logError(`   ❌ Server response not success for ${tx.uuid}:`, result);
           throw new Error(`Server response failed: ${result?.message || 'Unknown error'}`);
         }
         

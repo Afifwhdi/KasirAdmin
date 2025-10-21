@@ -261,6 +261,24 @@ const POSPage = () => {
       return;
     }
 
+    // Check stock availability
+    const currentCartItem = cart.find((item) => item.id === product.id && !item.locked);
+    const currentQuantityInCart = currentCartItem?.quantity || 0;
+    const availableStock = product.stock || 0;
+
+    // Validate stock
+    if (currentQuantityInCart >= availableStock) {
+      toast.error(`Stok tidak mencukupi! Stok tersedia: ${availableStock}`, {
+        icon: <XCircle className="w-5 h-5" />,
+        style: { background: "#ef4444", color: "white", border: "none" },
+        duration: 3000,
+      });
+      setTimeout(() => {
+        barcodeInputRef.current?.focus();
+      }, 50);
+      return;
+    }
+
     // Normal product (non-PLU)
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id && !item.locked);
@@ -306,6 +324,7 @@ const POSPage = () => {
     if (!barcode.trim()) return;
 
     try {
+      // Try API first
       const response = await fetch(
         `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PRODUCTS}?search=${barcode}&limit=1`
       );
@@ -316,30 +335,57 @@ const POSPage = () => {
         if (product.barcode && product.barcode.toLowerCase() === barcode.toLowerCase()) {
           addToCart(product);
           setBarcodeQuery("");
-        } else {
+          return;
+        }
+      }
+
+      // Not found in API
+      toast.error("Barcode tidak ditemukan!", {
+        icon: <XCircle className="w-5 h-5" />,
+        style: { background: "#ef4444", color: "white", border: "none" },
+      });
+      setBarcodeQuery("");
+    } catch (error) {
+      // API failed (offline), try SQLite fallback
+      console.log("⚠️ API fetch failed, searching in local database...");
+      
+      if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
+        try {
+          // Import productService dynamically
+          const { productService } = await import("@/services/electron-db");
+          
+          // Search by barcode in SQLite
+          const product = await productService.getByBarcode(barcode);
+          
+          if (product) {
+            console.log("✅ Product found in SQLite:", product.name);
+            addToCart(product as any);
+            setBarcodeQuery("");
+            return;
+          }
+          
+          // Not found in SQLite either
           toast.error("Barcode tidak ditemukan!", {
             icon: <XCircle className="w-5 h-5" />,
-            style: {
-              background: "#ef4444",
-              color: "white",
-              border: "none",
-            },
+            style: { background: "#ef4444", color: "white", border: "none" },
+          });
+          setBarcodeQuery("");
+        } catch (dbError) {
+          console.error("❌ SQLite search failed:", dbError);
+          toast.error("Gagal mencari produk", {
+            icon: <XCircle className="w-5 h-5" />,
+            style: { background: "#ef4444", color: "white", border: "none" },
           });
           setBarcodeQuery("");
         }
       } else {
-        toast.error("Barcode tidak ditemukan!", {
+        // Not in Electron environment
+        toast.error("Gagal mencari produk (offline)", {
           icon: <XCircle className="w-5 h-5" />,
           style: { background: "#ef4444", color: "white", border: "none" },
         });
         setBarcodeQuery("");
       }
-    } catch (error) {
-      toast.error("Gagal mencari produk", {
-        icon: <XCircle className="w-5 h-5" />,
-        style: { background: "#ef4444", color: "white", border: "none" },
-      });
-      setBarcodeQuery("");
     }
   };
 
@@ -382,6 +428,32 @@ const POSPage = () => {
 
   // --- Update jumlah produk
   const updateQuantity = (id: number, delta: number, pluWeight?: number) => {
+    // Check stock before increasing quantity
+    if (delta > 0) {
+      const item = cart.find((i) =>
+        pluWeight !== undefined
+          ? i.id === id && i.pluWeight === pluWeight
+          : i.id === id && !i.pluWeight
+      );
+
+      if (item) {
+        const availableStock = item.stock || 0;
+        const newQuantity = item.quantity + delta;
+
+        if (newQuantity > availableStock) {
+          toast.error(`Stok tidak mencukupi! Stok tersedia: ${availableStock}`, {
+            icon: <XCircle className="w-5 h-5" />,
+            style: { background: "#ef4444", color: "white", border: "none" },
+            duration: 3000,
+          });
+          setTimeout(() => {
+            barcodeInputRef.current?.focus();
+          }, 50);
+          return;
+        }
+      }
+    }
+
     setCart((prev) =>
       prev
         .map((item) => {
@@ -454,7 +526,7 @@ const POSPage = () => {
         change_amount: Math.round(changeAmount),
         status: transactionStatus,
         items: cart.map((item) => ({
-          product_id: item.id,
+          product_id: item.uuid || item.id, // Use UUID (server ID) for sync compatibility
           product_name_snapshot: item.name,
           quantity: item.quantity,
           price: Math.round(item.price),
@@ -774,6 +846,7 @@ const POSPage = () => {
                     key={product.id}
                     name={product.name}
                     price={product.price}
+                    stock={product.stock}
                     onAdd={() => addToCart(product)}
                     isPluEnabled={product.is_plu_enabled}
                   />
