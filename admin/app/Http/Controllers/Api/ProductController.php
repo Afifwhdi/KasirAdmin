@@ -23,10 +23,10 @@ class ProductController extends Controller
             ->orderBy('name');
 
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'ilike', "%{$search}%")
-                  ->orWhere('barcode', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%");
+                    ->orWhere('barcode', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%");
             });
         }
 
@@ -113,7 +113,7 @@ class ProductController extends Controller
         ]);
 
         $lastSync = $request->input('last_sync');
-        
+
         $query = Product::with('category')
             ->where('is_active', true);
 
