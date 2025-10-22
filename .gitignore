@@ -9,6 +9,7 @@ Thumbs.db
 *.sqlite
 *.bak
 *.tmp
+*.zip
 
 # --- NODE (React, NestJS, Dev Runner) ---
 node_modules/
