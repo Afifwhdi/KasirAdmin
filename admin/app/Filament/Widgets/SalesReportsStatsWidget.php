@@ -45,17 +45,15 @@ class SalesReportsStatsWidget extends StatsOverviewWidget
         }
 
         $avgTransaction = $transactions->count() > 0 ? $totalRevenue / $transactions->count() : 0;
-        
-        // Produk terlaris
+
         arsort($productsSold);
         $topProduct = !empty($productsSold) ? array_key_first($productsSold) : 'Belum ada';
         $topProductQty = !empty($productsSold) ? $productsSold[$topProduct] : 0;
-        
-        // Metode pembayaran populer
+
         $paymentMethods = $transactions->groupBy('paymentMethod.name')->map->count()->sortDesc();
         $topPayment = $paymentMethods->keys()->first() ?? 'Belum ada';
         $topPaymentCount = $paymentMethods->first() ?? 0;
-        
+
         return [
             Stat::make('Transaksi', $transactions->count())
                 ->description('Total transaksi')
@@ -71,12 +69,12 @@ class SalesReportsStatsWidget extends StatsOverviewWidget
                 ->description('Per transaksi')
                 ->descriptionIcon('heroicon-m-calculator', IconPosition::Before)
                 ->color('info'),
-                
+
             Stat::make('Produk Terlaris', $topProduct)
                 ->description($topProductQty . ' terjual')
                 ->descriptionIcon('heroicon-m-star', IconPosition::Before)
                 ->color('warning'),
-                
+
             Stat::make('Pembayaran', $topPayment)
                 ->description($topPaymentCount . ' transaksi')
                 ->descriptionIcon('heroicon-m-credit-card', IconPosition::Before)
