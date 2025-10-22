@@ -1,16 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { SyncProgressDialog } from './SyncProgressDialog';
-import { useTransactionSync } from '@/hooks/useTransactionSync';
-import { 
-  RefreshCw, 
-  Cloud, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Database,
-  Trash2 
-} from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { SyncProgressDialog } from "./SyncProgressDialog";
+import { useTransactionSync } from "@/hooks/useTransactionSync";
+import { RefreshCw, Cloud, AlertTriangle, CheckCircle2, Database, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,20 +18,14 @@ interface SyncButtonProps {
   showBadge?: boolean;
 }
 
-export const SyncButton = ({ 
-  variant = "default", 
+export const SyncButton = ({
+  variant = "default",
   size = "default",
-  showBadge = true 
+  showBadge = true,
 }: SyncButtonProps) => {
-  const { 
-    syncProgress, 
-    syncTransactions, 
-    resetSync, 
-    getSyncStats, 
-    cleanupDuplicates, 
-    isLoading 
-  } = useTransactionSync();
-  
+  const { syncProgress, syncTransactions, resetSync, getSyncStats, cleanupDuplicates, isLoading } =
+    useTransactionSync();
+
   const [showDialog, setShowDialog] = useState(false);
   const [stats, setStats] = useState({
     total_transactions: 0,
@@ -54,14 +41,14 @@ export const SyncButton = ({
     };
 
     loadStats();
-    const interval = setInterval(loadStats, 10000); // Update every 10 seconds
+    const interval = setInterval(loadStats, 10000);
 
     return () => clearInterval(interval);
   }, [getSyncStats]);
 
   // Show dialog when sync starts
   useEffect(() => {
-    if (syncProgress.status === 'syncing') {
+    if (syncProgress.status === "syncing") {
       setShowDialog(true);
     }
   }, [syncProgress.status]);
@@ -74,11 +61,11 @@ export const SyncButton = ({
   const handleCleanup = async () => {
     try {
       await cleanupDuplicates();
-      // Refresh stats after cleanup
+
       const newStats = await getSyncStats();
       setStats(newStats);
     } catch (error) {
-      console.error('Cleanup failed:', error);
+      console.error("Cleanup failed:", error);
     }
   };
 
@@ -86,55 +73,50 @@ export const SyncButton = ({
     if (isLoading) {
       return <RefreshCw className="w-4 h-4 animate-spin" />;
     }
-    
+
     if (stats.unsynced_count > 0) {
       return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
     }
-    
-    if (syncProgress.status === 'success') {
+
+    if (syncProgress.status === "success") {
       return <CheckCircle2 className="w-4 h-4 text-green-500" />;
     }
-    
+
     return <Cloud className="w-4 h-4" />;
   };
 
   const getSyncLabel = () => {
-    if (isLoading) return 'Syncing...';
+    if (isLoading) return "Syncing...";
     if (stats.unsynced_count > 0) return `Sync (${stats.unsynced_count})`;
-    return 'Sync';
+    return "Sync";
   };
 
   const getDialogTitle = () => {
-    if (syncProgress.status === 'success') return '✅ Sync Complete';
-    if (syncProgress.status === 'error') return '❌ Sync Failed';
-    return '🚀 Syncing Transactions';
+    if (syncProgress.status === "success") return "✅ Sync Complete";
+    if (syncProgress.status === "error") return "❌ Sync Failed";
+    return "🚀 Syncing Transactions";
   };
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant={variant}
-            size={size}
-            disabled={isLoading}
-            className="relative"
-          >
+          <Button variant={variant} size={size} disabled={isLoading} className="relative">
             {getSyncIcon()}
             <span className="ml-2">{getSyncLabel()}</span>
-            
+
             {/* Unsynced badge */}
             {showBadge && stats.unsynced_count > 0 && (
-              <Badge 
-                variant="destructive" 
+              <Badge
+                variant="destructive"
                 className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
               >
-                {stats.unsynced_count > 99 ? '99+' : stats.unsynced_count}
+                {stats.unsynced_count > 99 ? "99+" : stats.unsynced_count}
               </Badge>
             )}
           </Button>
         </DropdownMenuTrigger>
-        
+
         <DropdownMenuContent align="end" className="w-64">
           {/* Stats */}
           <div className="px-2 py-1 text-xs text-muted-foreground">
@@ -155,9 +137,9 @@ export const SyncButton = ({
               </div>
             )}
           </div>
-          
+
           <DropdownMenuSeparator />
-          
+
           {/* Actions */}
           <DropdownMenuItem onClick={handleSync} disabled={isLoading}>
             <Cloud className="w-4 h-4 mr-2" />
@@ -168,7 +150,7 @@ export const SyncButton = ({
               </Badge>
             )}
           </DropdownMenuItem>
-          
+
           {stats.duplicate_uuids > 0 && (
             <DropdownMenuItem onClick={handleCleanup}>
               <Trash2 className="w-4 h-4 mr-2" />
@@ -178,21 +160,20 @@ export const SyncButton = ({
               </Badge>
             </DropdownMenuItem>
           )}
-          
+
           {/* Last sync info */}
-          {syncProgress.status === 'success' && syncProgress.results && (
+          {syncProgress.status === "success" && syncProgress.results && (
             <>
               <DropdownMenuSeparator />
               <div className="px-2 py-1 text-xs text-muted-foreground">
                 <div>Last sync results:</div>
                 <div className="mt-1 text-green-600">
-                  ✓ {syncProgress.results.synced.length} synced
-                  ({syncProgress.results.updated.length} updated, {syncProgress.results.created.length} created)
+                  ✓ {syncProgress.results.synced.length} synced (
+                  {syncProgress.results.updated.length} updated,{" "}
+                  {syncProgress.results.created.length} created)
                 </div>
                 {syncProgress.results.failed.length > 0 && (
-                  <div className="text-red-600">
-                    ✗ {syncProgress.results.failed.length} failed
-                  </div>
+                  <div className="text-red-600">✗ {syncProgress.results.failed.length} failed</div>
                 )}
               </div>
             </>
@@ -205,14 +186,14 @@ export const SyncButton = ({
         open={showDialog}
         onOpenChange={(open) => {
           setShowDialog(open);
-          if (!open && syncProgress.status !== 'syncing') {
+          if (!open && syncProgress.status !== "syncing") {
             resetSync();
           }
         }}
         title={getDialogTitle()}
         progress={syncProgress.progress}
         currentItem={syncProgress.currentItem}
-        status={syncProgress.status === 'syncing' ? 'processing' : syncProgress.status}
+        status={syncProgress.status === "syncing" ? "processing" : syncProgress.status}
         message={syncProgress.message}
         stats={syncProgress.stats}
       />

@@ -25,9 +25,9 @@ class BestSellingProducts extends BaseWidget
                     ->selectRaw('COALESCE(SUM(transaction_items.quantity * transaction_items.price), 0) as total_revenue')
                     ->leftJoin('transaction_items', 'products.id', '=', 'transaction_items.product_id')
                     ->leftJoin('transactions', 'transaction_items.transaction_id', '=', 'transactions.id')
-                    ->where(function($query) {
+                    ->where(function ($query) {
                         $query->where('transactions.status', 'paid')
-                              ->orWhereNull('transactions.status');
+                            ->orWhereNull('transactions.status');
                     })
                     ->groupBy('products.id')
                     ->orderByDesc('total_sold')
@@ -53,7 +53,7 @@ class BestSellingProducts extends BaseWidget
                     ->sortable()
                     ->badge()
                     ->color('success')
-                    ->formatStateUsing(fn ($state) => number_format($state, 0, ',', '.') . ' unit'),
+                    ->formatStateUsing(fn($state) => number_format($state, 0, ',', '.') . ' unit'),
 
                 Tables\Columns\TextColumn::make('total_revenue')
                     ->label('Total Pendapatan')
@@ -65,8 +65,8 @@ class BestSellingProducts extends BaseWidget
                     ->label('Stok Tersisa')
                     ->sortable()
                     ->badge()
-                    ->color(fn ($record) => $record->stock <= $record->min_stock ? 'danger' : 'success')
-                    ->formatStateUsing(fn ($state) => (int) $state),
+                    ->color(fn($record) => $record->stock <= $record->min_stock ? 'danger' : 'success')
+                    ->formatStateUsing(fn($state) => (int) $state),
             ])
             ->defaultPaginationPageOption(10)
             ->paginated([10, 25, 50])

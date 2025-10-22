@@ -49,43 +49,39 @@ export const productsApi = {
           const page = params?.page || 1;
           const offset = (page - 1) * limit;
           
-          console.log(`🔍 Loading products from SQLite (limit: ${limit}, offset: ${offset})...`);
-          const products = await productService.getAll(limit, offset);
-          const totalCount = await productService.count();
+          // Build filter params for SQLite
+          const filterParams: any = {
+            limit,
+            offset,
+          };
           
-          console.log(`✅ Loaded ${products.length} products from local DB (total: ${totalCount})`);
-          
-          // Filter by category if needed
-          let filteredProducts = products;
+          // Add category filter if needed
           if (params?.category_id) {
-            // SQLite stores category as string (category_id.toString())
-            filteredProducts = products.filter((p: any) => {
-              const categoryId = p.category ? parseInt(p.category, 10) : null;
-              return categoryId === params.category_id;
-            });
-            console.log(`🔍 Filtered by category ${params.category_id}: ${filteredProducts.length} products`);
+            filterParams.category = params.category_id.toString();
+            console.log(`🔍 Filtering by category: ${filterParams.category}`);
           }
           
-          // Filter by search if needed
+          // Add search filter if needed
           if (params?.search) {
-            const searchLower = params.search.toLowerCase();
-            filteredProducts = filteredProducts.filter((p: any) => 
-              p.name?.toLowerCase().includes(searchLower) || 
-              p.barcode?.toLowerCase().includes(searchLower)
-            );
+            filterParams.search = params.search;
+            console.log(`🔍 Searching for: ${params.search}`);
           }
           
-          // Map products to include uuid field
-          const mappedProducts = filteredProducts.map((p: any) => ({
-            ...p,
-            id: p.id,
-            uuid: p.uuid, // Include server's UUID for sync compatibility
-          }));
+          console.log(`🔍 Loading products from SQLite with filters:`, filterParams);
+          
+          // Use new method with filters applied in SQL query
+          const products = await productService.getAllWithFilters(filterParams);
+          const totalCount = await productService.countWithFilters({
+            category: filterParams.category,
+            search: filterParams.search,
+          });
+          
+          console.log(`✅ Loaded ${products.length} products from local DB (total matching filters: ${totalCount})`);
           
           return {
             status: "success",
             message: "Data loaded from local database (offline mode)",
-            data: mappedProducts,
+            data: products,
             meta: {
               total: totalCount,
               page: page,

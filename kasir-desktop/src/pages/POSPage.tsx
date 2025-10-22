@@ -538,14 +538,32 @@ const POSPage = () => {
 
       await transactionsWrapper.create(payload);
 
+      // Update stock locally (for Electron mode)
+      if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
+        try {
+          const { productService } = await import("@/services/electron-db");
+          
+          // Decrease stock for each item
+          for (const item of cart) {
+            console.log(`📉 Decreasing stock for ${item.name} (ID: ${item.id}) by ${item.quantity}`);
+            await productService.decreaseStock(item.id, item.quantity);
+          }
+          
+          console.log("✅ Stock updated in local database");
+        } catch (stockError) {
+          console.error("❌ Failed to update stock locally:", stockError);
+          // Don't block transaction, just log error
+        }
+      }
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["products"] }),
       ]);
 
-      toast.success("Transaksi berhasil!", {
+      toast.success("Transaksi berhasil", {
         icon: <CheckCircle className="w-5 h-5" />,
-        style: { background: "#10b981", color: "white", border: "none" },
+        duration: 2000,
       });
 
       // Auto-print receipt - Temporarily Disabled

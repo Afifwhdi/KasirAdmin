@@ -13,12 +13,12 @@ class BundlingSuggestions extends BaseWidget
 {
     protected static ?int $sort = 4;
     protected int | string | array $columnSpan = 'full';
-    
+
     protected function getTableHeading(): string
     {
         return '💡 Saran Bundling Produk';
     }
-    
+
     protected function getTableDescription(): ?string
     {
         return 'Produk yang sering dibeli bersamaan (30 hari terakhir)';
@@ -27,7 +27,7 @@ class BundlingSuggestions extends BaseWidget
     public function table(Table $table): Table
     {
         $bundlePairs = $this->getBundlingSuggestions();
-        
+
         return $table
             ->query(
                 Product::query()->whereIn('id', collect($bundlePairs)->pluck('product1_id'))
@@ -40,7 +40,7 @@ class BundlingSuggestions extends BaseWidget
                         $product2 = Product::find($pair['product2_id']);
                         return $record->name . ' + ' . ($product2->name ?? 'Unknown');
                     }),
-                    
+
                 Tables\Columns\TextColumn::make('frequency')
                     ->label('Frekuensi')
                     ->state(function (Product $record) use ($bundlePairs) {
@@ -49,7 +49,7 @@ class BundlingSuggestions extends BaseWidget
                     })
                     ->badge()
                     ->color('success'),
-                    
+
                 Tables\Columns\TextColumn::make('suggestion')
                     ->label('Saran')
                     ->state(function (Product $record) use ($bundlePairs) {
@@ -73,7 +73,7 @@ class BundlingSuggestions extends BaseWidget
             ->emptyStateHeading('Tidak ada data bundling')
             ->emptyStateDescription('Lakukan lebih banyak transaksi untuk mendapatkan saran bundling');
     }
-    
+
     private function getBundlingSuggestions(): array
     {
         // Get transactions from last 30 days
@@ -81,12 +81,12 @@ class BundlingSuggestions extends BaseWidget
             ->where('created_at', '>=', now()->subDays(30))
             ->with('items.product')
             ->get();
-        
+
         $pairs = [];
-        
+
         foreach ($transactions as $transaction) {
             $items = $transaction->items->pluck('product_id')->toArray();
-            
+
             // Find pairs
             for ($i = 0; $i < count($items); $i++) {
                 for ($j = $i + 1; $j < count($items); $j++) {
@@ -102,12 +102,12 @@ class BundlingSuggestions extends BaseWidget
                 }
             }
         }
-        
+
         // Sort by frequency
-        usort($pairs, function($a, $b) {
+        usort($pairs, function ($a, $b) {
             return $b['count'] - $a['count'];
         });
-        
+
         // Return top 10
         return array_slice($pairs, 0, 10);
     }

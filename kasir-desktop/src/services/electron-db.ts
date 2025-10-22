@@ -128,6 +128,71 @@ export const productService = {
     );
   },
 
+  async getAllWithFilters(params: {
+    limit?: number;
+    offset?: number;
+    category?: string;
+    search?: string;
+  }) {
+    const { limit = 500, offset = 0, category, search } = params;
+    
+    let sql = "SELECT * FROM products WHERE 1=1";
+    const sqlParams: any[] = [];
+    
+    // Filter by category
+    if (category) {
+      sql += " AND category = ?";
+      sqlParams.push(category);
+    }
+    
+    // Filter by search (name or barcode)
+    if (search) {
+      sql += " AND (name LIKE ? OR barcode LIKE ?)";
+      sqlParams.push(`%${search}%`, `%${search}%`);
+    }
+    
+    sql += " ORDER BY name ASC LIMIT ? OFFSET ?";
+    sqlParams.push(limit, offset);
+    
+    return electronDB.query(sql, sqlParams);
+  },
+
+  async countWithFilters(params: { category?: string; search?: string }) {
+    const { category, search } = params;
+    
+    let sql = "SELECT COUNT(*) as total FROM products WHERE 1=1";
+    const sqlParams: any[] = [];
+    
+    // Filter by category
+    if (category) {
+      sql += " AND category = ?";
+      sqlParams.push(category);
+    }
+    
+    // Filter by search (name or barcode)
+    if (search) {
+      sql += " AND (name LIKE ? OR barcode LIKE ?)";
+      sqlParams.push(`%${search}%`, `%${search}%`);
+    }
+    
+    const result = await electronDB.get(sql, sqlParams);
+    return result?.total || 0;
+  },
+
+  async updateStock(id: number, quantityChange: number) {
+    // quantityChange is negative for decrease (e.g., -1, -5)
+    // quantityChange is positive for increase (e.g., +1, +5)
+    return electronDB.run(
+      "UPDATE products SET stock = stock + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      [quantityChange, id]
+    );
+  },
+
+  async decreaseStock(id: number, quantity: number) {
+    // Decrease stock by quantity (for transactions)
+    return this.updateStock(id, -quantity);
+  },
+
   async getByCategory(category: string) {
     return electronDB.query("SELECT * FROM products WHERE category = ? ORDER BY name ASC", [
       category,

@@ -185,42 +185,40 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
     try {
       const result = await transactionsWrapper.syncToServer();
 
+      // Simple notification - only show if there are synced transactions
       if (result.synced.length > 0) {
-        toast.success(`Berhasil sync ${result.synced.length} transaksi ke server!`, {
+        toast.success(`Berhasil sync ${result.synced.length} transaksi`, {
           icon: "✓",
-          style: {
-            background: "#10b981",
-            color: "white",
-            border: "none",
-          },
-          duration: 3000,
-        });
-      } else {
-        toast.info("Tidak ada transaksi baru untuk di-sync", {
-          icon: "ℹ️",
           duration: 2000,
         });
+
+        // Sync products from server to update stock (silent)
+        console.log("🔄 Syncing products from server to update stock...");
+        
+        try {
+          await syncService.syncProductsFromServer();
+          console.log("✅ Products synced from server after transaction upload");
+          
+          // Invalidate products query to refresh UI
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+        } catch (syncError) {
+          console.error("❌ Failed to sync products after upload:", syncError);
+          // Silent fail - will sync on next download
+        }
       }
 
+      // Only show error if there are REAL failures (not duplicate)
       if (result.failed.length > 0) {
-        toast.warning(`${result.failed.length} transaksi gagal di-sync. Cek koneksi server.`, {
-          icon: "⚠️",
-          style: {
-            background: "#f59e0b",
-            color: "white",
-          },
-          duration: 4000,
+        toast.error(`${result.failed.length} transaksi gagal di-sync`, {
+          icon: "❌",
+          duration: 3000,
         });
       }
     } catch (error) {
       console.error("Sync error:", error);
-      toast.error("Gagal sync ke server: " + (error as Error).message, {
+      toast.error("Gagal sync ke server", {
         icon: "❌",
-        style: {
-          background: "#ef4444",
-          color: "white",
-        },
-        duration: 3000,
+        duration: 2000,
       });
     } finally {
       setIsSyncing(false);

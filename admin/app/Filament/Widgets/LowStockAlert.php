@@ -11,10 +11,10 @@ class LowStockAlert extends BaseWidget
 {
     protected static ?int $sort = 3;
     protected int | string | array $columnSpan = 'full';
-    
+
     protected function getTableHeading(): string
     {
-        return '⚠️ Peringatan Stok Rendah';
+        return 'Peringatan Stok Rendah';
     }
 
     public function table(Table $table): Table
@@ -31,22 +31,23 @@ class LowStockAlert extends BaseWidget
                     ->label('Nama Produk')
                     ->searchable()
                     ->sortable(),
-                    
+
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Kategori')
                     ->badge()
                     ->color('info'),
-                    
+
                 Tables\Columns\TextColumn::make('stock')
                     ->label('Stok Saat Ini')
                     ->badge()
+                    ->formatStateUsing(fn($state) => (int) $state)
                     ->color('danger'),
-                    
+
                 Tables\Columns\TextColumn::make('min_stock')
                     ->label('Stok Minimum')
                     ->badge()
                     ->color('warning'),
-                    
+
                 Tables\Columns\TextColumn::make('stock_status')
                     ->label('Status')
                     ->badge()
@@ -58,7 +59,7 @@ class LowStockAlert extends BaseWidget
                         }
                         return 'Rendah';
                     })
-                    ->color(fn (string $state): string => match ($state) {
+                    ->color(fn(string $state): string => match ($state) {
                         'Habis' => 'danger',
                         'Kritis' => 'warning',
                         default => 'gray',
