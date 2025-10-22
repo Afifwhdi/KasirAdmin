@@ -18,20 +18,16 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-
 import { useProducts } from "@/features/products/hooks/useProducts";
 import { useCategories } from "@/features/categories/hooks/useCategories";
 import { useBootstrap } from "@/hooks/useBootstrap";
 import { CreateTransactionData } from "@/features/transactions/services/api";
 import { transactionsWrapper } from "@/services/transactions-wrapper";
 import { API_CONFIG, API_ENDPOINTS } from "@/config/api";
-
-import { ProductCard, CartItem, PLUModal } from "@/features/pos";
+import { ProductCard, CartItem, PLUModal, PaymentSuccessModal } from "@/features/pos";
 import { Product } from "@/features/products/types";
 import { PrinterService, ReceiptData } from "@/services/printer";
 import { lazy, Suspense } from "react";
-
-// LAZY LOAD HEAVY COMPONENTS (Modal dengan animasi & logic berat)
 const PaymentModal = lazy(() =>
   import("@/features/pos/components/PaymentModal").then((module) => ({
     default: module.PaymentModal,
@@ -43,7 +39,6 @@ type CartItemType = Product & {
   pluWeight?: number;
   actualPrice?: number;
 };
-
 type HeldTransaction = {
   id: string;
   timestamp: number;
@@ -51,56 +46,49 @@ type HeldTransaction = {
   cart: CartItemType[];
   total: number;
 };
-
 const AUTOSAVE_KEY = "pos_autosave_cart";
 const HELD_TRANSACTIONS_KEY = "pos_held_transactions";
-
 const POSPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
   const [showLeftShadow, setShowLeftShadow] = useState(false);
   const [showRightShadow, setShowRightShadow] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Separate search states for barcode and product name
   const [barcodeQuery, setBarcodeQuery] = useState("");
   const [productNameQuery, setProductNameQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-
-  // Separate refs for barcode and product name inputs
   const barcodeInputRef = useRef<HTMLInputElement>(null);
   const productNameInputRef = useRef<HTMLInputElement>(null);
-
-  // Barcode scanner detection
   const barcodeBufferRef = useRef<string>("");
   const barcodeTimerRef = useRef<NodeJS.Timeout | null>(null);
-
   const [cart, setCart] = useState<CartItemType[]>([]);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isPLUModalOpen, setIsPLUModalOpen] = useState(false);
   const [selectedPLUProduct, setSelectedPLUProduct] = useState<Product | null>(null);
-
-  // Hold Transaction states
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [successPaymentData, setSuccessPaymentData] = useState<{
+    amount: number;
+    orderId: string;
+    paymentMethod: string;
+    paymentTime: string;
+    customerName: string;
+    cashReceived: number;
+    changeAmount: number;
+    cartItems: CartItemType[];
+  } | null>(null);
   const [heldTransactions, setHeldTransactions] = useState<HeldTransaction[]>([]);
   const [isHeldListOpen, setIsHeldListOpen] = useState(false);
   const [isRestoringCart, setIsRestoringCart] = useState(false);
-
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const pageSize = 10; // 10 produk per halaman untuk performa optimal
-
   const orderNumber = `TRX-${Date.now().toString().slice(-6)}`;
-
-  // Debounce for product name search only
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(productNameQuery);
       setPage(1);
     }, 300);
-
     return () => clearTimeout(timer);
   }, [productNameQuery]);
-
-  // Products data - always use pagination
   const {
     data: productsData,
     isLoading: isProductsLoading,
@@ -111,30 +99,20 @@ const POSPage = () => {
     category_id: selectedCategory === "all" ? undefined : selectedCategory,
     search: debouncedSearch || undefined,
   });
-
   const isLoading = isProductsLoading;
   const error = productsError;
-
   const products = productsData?.data ?? [];
   const meta = productsData?.meta ?? { total: 0, page: 1, limit: pageSize, totalPages: 0 };
   const totalPages = meta.totalPages;
-
-  // Bootstrap data - untuk categories only (cached)
   const { data: bootstrapData, isLoading: isBootstrapLoading } = useBootstrap();
-
-  // Categories from bootstrap (cached 10 min)
   const categories = bootstrapData?.categories ?? [];
   const isLoadingCategories = isBootstrapLoading;
-
-  // --- Scroll shadow effect
   const handleScroll = () => {
     if (!scrollContainerRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
     setShowLeftShadow(scrollLeft > 0);
     setShowRightShadow(scrollLeft < scrollWidth - clientWidth - 1);
   };
-
-  // Scroll functions for arrow buttons
   const scrollCategoriesLeft = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({
@@ -143,7 +121,6 @@ const POSPage = () => {
       });
     }
   };
-
   const scrollCategoriesRight = () => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollBy({
@@ -152,22 +129,15 @@ const POSPage = () => {
       });
     }
   };
-
   useEffect(() => {
     handleScroll();
   }, [categories]);
-
-  // Reset halaman saat filter berubah
   useEffect(() => {
     setPage(1);
   }, [selectedCategory]);
-
-  // --- Auto-focus ke barcode input saat pertama kali load/refresh
   useEffect(() => {
     barcodeInputRef.current?.focus();
   }, []);
-
-  // --- Load held transactions dari localStorage saat mount
   useEffect(() => {
     const savedHeldTransactions = localStorage.getItem(HELD_TRANSACTIONS_KEY);
     if (savedHeldTransactions) {
@@ -179,8 +149,6 @@ const POSPage = () => {
       }
     }
   }, []);
-
-  // --- Save held transactions ke localStorage saat ada perubahan
   useEffect(() => {
     if (heldTransactions.length > 0) {
       localStorage.setItem(HELD_TRANSACTIONS_KEY, JSON.stringify(heldTransactions));
@@ -188,8 +156,6 @@ const POSPage = () => {
       localStorage.removeItem(HELD_TRANSACTIONS_KEY);
     }
   }, [heldTransactions]);
-
-  // --- Auto-restore cart dari localStorage saat mount
   useEffect(() => {
     const savedCart = localStorage.getItem(AUTOSAVE_KEY);
     if (savedCart && !isRestoringCart) {
@@ -210,41 +176,30 @@ const POSPage = () => {
       }
     }
   }, []);
-
-  // --- Auto-save cart setiap 10 detik
   useEffect(() => {
     if (cart.length === 0) {
       localStorage.removeItem(AUTOSAVE_KEY);
       return;
     }
-
     const autoSaveTimer = setInterval(() => {
       localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(cart));
     }, 10000); // 10 seconds
-
     return () => clearInterval(autoSaveTimer);
   }, [cart]);
-
-  // --- Keyboard shortcuts untuk switch antara barcode dan product name search
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // F1 untuk focus ke barcode input
       if (e.key === "F1") {
         e.preventDefault();
         barcodeInputRef.current?.focus();
       }
-      // F2 untuk focus ke product name input
       if (e.key === "F2") {
         e.preventDefault();
         productNameInputRef.current?.focus();
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  // --- Cleanup barcode timer on unmount
   useEffect(() => {
     return () => {
       if (barcodeTimerRef.current) {
@@ -252,21 +207,15 @@ const POSPage = () => {
       }
     };
   }, []);
-
-  // --- Tambahkan ke keranjang
   const addToCart = (product: Product) => {
     if (product.is_plu_enabled) {
       setSelectedPLUProduct(product);
       setIsPLUModalOpen(true);
       return;
     }
-
-    // Check stock availability
     const currentCartItem = cart.find((item) => item.id === product.id && !item.locked);
     const currentQuantityInCart = currentCartItem?.quantity || 0;
     const availableStock = product.stock || 0;
-
-    // Validate stock
     if (currentQuantityInCart >= availableStock) {
       toast.error(`Stok tidak mencukupi! Stok tersedia: ${availableStock}`, {
         icon: <XCircle className="w-5 h-5" />,
@@ -278,8 +227,6 @@ const POSPage = () => {
       }, 50);
       return;
     }
-
-    // Normal product (non-PLU)
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id && !item.locked);
       if (existing) {
@@ -289,17 +236,12 @@ const POSPage = () => {
       }
       return [...prev, { ...product, quantity: 1 }];
     });
-
-    // Auto focus back to barcode input after adding
     setTimeout(() => {
       barcodeInputRef.current?.focus();
     }, 50);
   };
-
-  // --- Handle PLU product selection
   const handlePLUSelect = (weight: number, price: number, locked: boolean) => {
     if (!selectedPLUProduct) return;
-
     setCart((prev) => [
       ...prev,
       {
@@ -311,25 +253,18 @@ const POSPage = () => {
         price: price,
       },
     ]);
-
     setSelectedPLUProduct(null);
-    // Auto focus back to barcode input after PLU selection
     setTimeout(() => {
       barcodeInputRef.current?.focus();
     }, 50);
   };
-
-  // --- Process barcode scan
   const processBarcodeScans = async (barcode: string) => {
     if (!barcode.trim()) return;
-
     try {
-      // Try API first
       const response = await fetch(
         `${API_CONFIG.BASE_URL}${API_ENDPOINTS.PRODUCTS}?search=${barcode}&limit=1`
       );
       const result = await response.json();
-
       if (result.data && result.data.length > 0) {
         const product = result.data[0];
         if (product.barcode && product.barcode.toLowerCase() === barcode.toLowerCase()) {
@@ -338,33 +273,23 @@ const POSPage = () => {
           return;
         }
       }
-
-      // Not found in API
       toast.error("Barcode tidak ditemukan!", {
         icon: <XCircle className="w-5 h-5" />,
         style: { background: "#ef4444", color: "white", border: "none" },
       });
       setBarcodeQuery("");
     } catch (error) {
-      // API failed (offline), try SQLite fallback
-      console.log("⚠️ API fetch failed, searching in local database...");
-      
+
       if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
         try {
-          // Import productService dynamically
           const { productService } = await import("@/services/electron-db");
-          
-          // Search by barcode in SQLite
           const product = await productService.getByBarcode(barcode);
-          
           if (product) {
-            console.log("✅ Product found in SQLite:", product.name);
+
             addToCart(product as any);
             setBarcodeQuery("");
             return;
           }
-          
-          // Not found in SQLite either
           toast.error("Barcode tidak ditemukan!", {
             icon: <XCircle className="w-5 h-5" />,
             style: { background: "#ef4444", color: "white", border: "none" },
@@ -379,7 +304,6 @@ const POSPage = () => {
           setBarcodeQuery("");
         }
       } else {
-        // Not in Electron environment
         toast.error("Gagal mencari produk (offline)", {
           icon: <XCircle className="w-5 h-5" />,
           style: { background: "#ef4444", color: "white", border: "none" },
@@ -388,58 +312,40 @@ const POSPage = () => {
       }
     }
   };
-
-  // --- Handle barcode input change with auto-submit
   const handleBarcodeChange = (value: string) => {
     setBarcodeQuery(value);
-
-    // Clear previous timer
     if (barcodeTimerRef.current) {
       clearTimeout(barcodeTimerRef.current);
     }
-
-    // Auto-submit after 200ms of no input (barcode scanner is done)
     if (value.trim().length > 0) {
       barcodeTimerRef.current = setTimeout(() => {
         processBarcodeScans(value);
       }, 200);
     }
   };
-
-  // --- Handle Enter key on barcode input (for manual input or payment modal)
   const handleBarcodeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-
-      // Clear timer to prevent double submission
       if (barcodeTimerRef.current) {
         clearTimeout(barcodeTimerRef.current);
       }
-
       if (barcodeQuery.trim()) {
-        // Manual submit if user presses Enter
         processBarcodeScans(barcodeQuery);
       } else if (cart.length > 0) {
-        // Jika barcode kosong dan ada item di cart, buka modal pembayaran
         setIsPaymentModalOpen(true);
       }
     }
   };
-
-  // --- Update jumlah produk
   const updateQuantity = (id: number, delta: number, pluWeight?: number) => {
-    // Check stock before increasing quantity
     if (delta > 0) {
       const item = cart.find((i) =>
         pluWeight !== undefined
           ? i.id === id && i.pluWeight === pluWeight
           : i.id === id && !i.pluWeight
       );
-
       if (item) {
         const availableStock = item.stock || 0;
         const newQuantity = item.quantity + delta;
-
         if (newQuantity > availableStock) {
           toast.error(`Stok tidak mencukupi! Stok tersedia: ${availableStock}`, {
             icon: <XCircle className="w-5 h-5" />,
@@ -453,7 +359,6 @@ const POSPage = () => {
         }
       }
     }
-
     setCart((prev) =>
       prev
         .map((item) => {
@@ -461,7 +366,6 @@ const POSPage = () => {
             pluWeight !== undefined
               ? item.id === id && item.pluWeight === pluWeight
               : item.id === id && !item.pluWeight;
-
           if (isMatch) {
             if (item.locked && delta > 0) {
               return item;
@@ -472,18 +376,13 @@ const POSPage = () => {
         })
         .filter((item) => item.quantity > 0)
     );
-
-    // Auto focus back to barcode input after updating quantity
     setTimeout(() => {
       barcodeInputRef.current?.focus();
     }, 50);
   };
-
-  // --- Hapus item dari cart
   const removeFromCart = (id: number, pluWeight?: number) => {
     setCart((prev) =>
       prev.filter((item) => {
-        // Match by id and pluWeight
         const isMatch =
           pluWeight !== undefined
             ? item.id === id && item.pluWeight === pluWeight
@@ -491,19 +390,13 @@ const POSPage = () => {
         return !isMatch;
       })
     );
-
-    // Auto focus back to barcode input after removing item
     setTimeout(() => {
       barcodeInputRef.current?.focus();
     }, 50);
   };
-
-  // --- Hitung total
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const totalDiscount = 0;
   const finalTotal = subtotal - totalDiscount;
-
-  // --- Selesai pembayaran
   const handlePaymentComplete = async (data: {
     customerName: string;
     paymentMethod: "cash" | "credit";
@@ -512,10 +405,7 @@ const POSPage = () => {
     const cashReceived = data.paymentMethod === "cash" ? data.amountPaid : 0;
     const changeAmount =
       data.paymentMethod === "cash" ? Math.max(0, data.amountPaid - finalTotal) : 0;
-
-    // Set status: tunai = paid, bon = pending
     const transactionStatus = data.paymentMethod === "cash" ? "paid" : "pending";
-
     try {
       const payload: CreateTransactionData = {
         transaction_number: orderNumber,
@@ -535,47 +425,44 @@ const POSPage = () => {
           total_profit: 0,
         })),
       };
-
       await transactionsWrapper.create(payload);
-
-      // Update stock locally (for Electron mode)
       if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
         try {
           const { productService } = await import("@/services/electron-db");
-          
-          // Decrease stock for each item
           for (const item of cart) {
             console.log(`📉 Decreasing stock for ${item.name} (ID: ${item.id}) by ${item.quantity}`);
             await productService.decreaseStock(item.id, item.quantity);
           }
-          
-          console.log("✅ Stock updated in local database");
+
         } catch (stockError) {
           console.error("❌ Failed to update stock locally:", stockError);
-          // Don't block transaction, just log error
         }
       }
-
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["transactions"] }),
         queryClient.invalidateQueries({ queryKey: ["products"] }),
       ]);
-
-      toast.success("Transaksi berhasil", {
-        icon: <CheckCircle className="w-5 h-5" />,
-        duration: 2000,
+      const now = new Date();
+      const paymentTime = now.toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
       });
-
-      // Auto-print receipt - Temporarily Disabled
-      // try {
-      //   await printReceipt(data, orderNumber, cashReceived, changeAmount);
-      // } catch (error) {
-      //   console.error("Print error:", error);
-      //   // Don't block the flow if print fails
-      //   toast.error("Gagal print struk, tapi transaksi tersimpan", {
-      //     icon: <XCircle className="w-5 h-5" />,
-      //   });
-      // }
+      const cartSnapshot = [...cart];
+      setSuccessPaymentData({
+        amount: finalTotal,
+        orderId: orderNumber,
+        paymentMethod: data.paymentMethod === "cash" ? "Tunai" : "Bon",
+        paymentTime: paymentTime,
+        customerName: data.customerName,
+        cashReceived: cashReceived,
+        changeAmount: changeAmount,
+        cartItems: cartSnapshot,
+      });
+      setIsPaymentModalOpen(false);
+      setIsSuccessModalOpen(true);
+      setCart([]);
+      localStorage.removeItem(AUTOSAVE_KEY);
     } catch (err) {
       console.error(err);
       toast.error("Gagal menyimpan transaksi", {
@@ -583,19 +470,7 @@ const POSPage = () => {
         style: { background: "#ef4444", color: "white", border: "none" },
       });
     }
-
-    // Clear cart and close modal
-    setCart([]);
-    setIsPaymentModalOpen(false);
-
-    // Clear autosave after successful payment
-    localStorage.removeItem(AUTOSAVE_KEY);
-
-    // Auto focus back to barcode input after payment
-    setTimeout(() => barcodeInputRef.current?.focus(), 150);
   };
-
-  // --- Hold Transaction Functions
   const handleHoldTransaction = () => {
     if (cart.length === 0) {
       toast.error("Keranjang kosong!", {
@@ -604,26 +479,21 @@ const POSPage = () => {
       });
       return;
     }
-
     const heldTransaction: HeldTransaction = {
       id: `HOLD-${Date.now()}`,
       timestamp: Date.now(),
       cart: [...cart],
       total: finalTotal,
     };
-
     setHeldTransactions((prev) => [...prev, heldTransaction]);
     setCart([]);
     localStorage.removeItem(AUTOSAVE_KEY);
-
     toast.success("Transaksi di-hold!", {
       icon: <CheckCircle className="w-5 h-5" />,
       style: { background: "#10b981", color: "white", border: "none" },
     });
-
     setTimeout(() => barcodeInputRef.current?.focus(), 50);
   };
-
   const handleResumeTransaction = (transaction: HeldTransaction) => {
     if (cart.length > 0) {
       toast.error("Selesaikan transaksi saat ini terlebih dahulu!", {
@@ -632,29 +502,109 @@ const POSPage = () => {
       });
       return;
     }
-
     setCart(transaction.cart);
     setHeldTransactions((prev) => prev.filter((t) => t.id !== transaction.id));
     setIsHeldListOpen(false);
-
     toast.success("Transaksi di-resume!", {
       icon: <CheckCircle className="w-5 h-5" />,
       style: { background: "#10b981", color: "white", border: "none" },
     });
-
     setTimeout(() => barcodeInputRef.current?.focus(), 50);
   };
-
   const handleDeleteHeldTransaction = (transactionId: string) => {
     setHeldTransactions((prev) => prev.filter((t) => t.id !== transactionId));
-
     toast.success("Transaksi dihapus!", {
       icon: <CheckCircle className="w-5 h-5" />,
       style: { background: "#10b981", color: "white", border: "none" },
     });
   };
+  const handleSuccessModalClose = () => {
+    setIsSuccessModalOpen(false);
+    setSuccessPaymentData(null);
+    setTimeout(() => barcodeInputRef.current?.focus(), 150);
+  };
+  const handlePrintFromSuccessModal = async () => {
+    if (!successPaymentData) return;
+    try {
+      toast.info("Mencetak struk...", {
+        icon: <Printer className="w-5 h-5" />,
+        duration: 2000,
+      });
+      const cartData = successPaymentData.cartItems;
+      if (cartData.length === 0) {
+        toast.warning("Data cart tidak tersedia untuk print.", {
+          icon: <XCircle className="w-5 h-5" />,
+          duration: 3000,
+        });
+        return;
+      }
+      const user = localStorage.getItem("user");
+      const userName = user ? JSON.parse(user).name : "Kasir";
+      const now = new Date();
+      const receiptData: ReceiptData = {
+        storeName: "DILLA CELL", // Hardcoded (used for reference only)
+        storeAddress: "Ngestikarya, waway karya, lampung timur", // Hardcoded
+        storePhone: "088287013223", // Hardcoded
+        transactionNumber: successPaymentData.orderId,
+        date: now.toLocaleDateString("id-ID", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }),
+        time: successPaymentData.paymentTime,
+        cashier: userName,
+        customerName: successPaymentData.customerName,
+        items: cartData.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+          subtotal: item.price * item.quantity,
+        })),
+        totalQty: cartData.reduce((sum, item) => sum + item.quantity, 0),
+        subtotal: successPaymentData.amount,
+        total: successPaymentData.amount,
+        amountPaid: successPaymentData.cashReceived,
+        change: successPaymentData.changeAmount,
+        paymentMethod: successPaymentData.paymentMethod,
+      };
+      let printViaBluetooth = false;
+      let printerName = "";
+      try {
+        const settingsResponse = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.SETTINGS}`, {
+          signal: AbortSignal.timeout(3000), // 3 second timeout
+        });
+        const settingsResult = await settingsResponse.json();
+        if (settingsResult.status === "success") {
+          const settings = settingsResult.data;
+          printViaBluetooth = settings.print_via_bluetooth === 1;
+          printerName = settings.name_printer_local || "";
+        }
+      } catch (settingsError) {
 
-  // --- Print Receipt
+        printViaBluetooth = false;
+        printerName = "";
+      }
+      if (printViaBluetooth) {
+        await PrinterService.printViaBluetooth(receiptData);
+        toast.success("Struk berhasil dicetak via Bluetooth", {
+          icon: <CheckCircle className="w-5 h-5" />,
+          style: { background: "#10b981", color: "white", border: "none" },
+        });
+      } else {
+        await PrinterService.printViaLocal(receiptData, printerName);
+        toast.success("Struk berhasil dicetak", {
+          icon: <CheckCircle className="w-5 h-5" />,
+          style: { background: "#10b981", color: "white", border: "none" },
+        });
+      }
+    } catch (error) {
+      console.error("Print receipt error:", error);
+      toast.error("Gagal print struk: " + (error as Error).message, {
+        icon: <XCircle className="w-5 h-5" />,
+        style: { background: "#ef4444", color: "white", border: "none" },
+      });
+    }
+  };
   const printReceipt = async (
     paymentData: {
       customerName: string;
@@ -668,16 +618,12 @@ const POSPage = () => {
     try {
       const settingsResponse = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.SETTINGS}`);
       const settingsResult = await settingsResponse.json();
-
       if (settingsResult.status !== "success") {
         throw new Error("Failed to fetch settings");
       }
-
       const settings = settingsResult.data;
-
       const user = localStorage.getItem("user");
       const userName = user ? JSON.parse(user).name : "Kasir";
-
       const now = new Date();
       const receiptData: ReceiptData = {
         storeName: settings.name,
@@ -709,8 +655,6 @@ const POSPage = () => {
         change: changeAmount,
         paymentMethod: paymentData.paymentMethod === "cash" ? "Cash" : "Bon",
       };
-
-      // Print based on settings
       if (settings.print_via_bluetooth === 1) {
         await PrinterService.printViaBluetooth(receiptData);
         toast.success("Struk berhasil dicetak via Bluetooth");
@@ -723,8 +667,6 @@ const POSPage = () => {
       throw error;
     }
   };
-
-  // --- UI Rendering
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
       {/* Produk */}
@@ -744,7 +686,6 @@ const POSPage = () => {
                 </Button>
               </>
             )}
-
             {showRightShadow && (
               <>
                 <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-card via-card/80 to-transparent z-10 pointer-events-none" />
@@ -758,7 +699,6 @@ const POSPage = () => {
                 </Button>
               </>
             )}
-
             <div
               ref={scrollContainerRef}
               onScroll={handleScroll}
@@ -773,7 +713,6 @@ const POSPage = () => {
               >
                 Semua Produk
               </Button>
-
               {isLoadingCategories ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -794,7 +733,6 @@ const POSPage = () => {
               )}
             </div>
           </div>
-
           {/* Search Bars - Barcode and Product Name */}
           <div className="grid grid-cols-2 gap-3">
             {/* Barcode Search - Auto focus */}
@@ -813,7 +751,6 @@ const POSPage = () => {
                 F1
               </span>
             </div>
-
             {/* Product Name Search - Manual focus */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -831,7 +768,6 @@ const POSPage = () => {
             </div>
           </div>
         </Card>
-
         {/* Grid produk */}
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
@@ -870,7 +806,6 @@ const POSPage = () => {
                   />
                 ))}
               </div>
-
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="border-t bg-card">
@@ -880,7 +815,6 @@ const POSPage = () => {
                       Menampilkan {(meta.page - 1) * meta.limit + 1} -{" "}
                       {Math.min(meta.page * meta.limit, meta.total)} dari {meta.total} produk
                     </div>
-
                     {/* Pagination Controls */}
                     <div className="flex items-center justify-center gap-2">
                       <Button
@@ -893,7 +827,6 @@ const POSPage = () => {
                         <ChevronLeft className="w-4 h-4" />
                         Prev
                       </Button>
-
                       {/* Page Numbers */}
                       <div className="flex items-center gap-1">
                         {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -926,7 +859,6 @@ const POSPage = () => {
                             </>
                           ))}
                       </div>
-
                       <Button
                         variant="outline"
                         size="sm"
@@ -945,7 +877,6 @@ const POSPage = () => {
           )}
         </div>
       </div>
-
       {/* Keranjang */}
       <Card className="w-full md:w-96 flex flex-col">
         <div className="p-4 border-b">
@@ -970,7 +901,6 @@ const POSPage = () => {
             </Button>
           </div>
         </div>
-
         <div className="flex-1 overflow-y-auto p-4">
           {cart.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center">
@@ -997,7 +927,6 @@ const POSPage = () => {
             </div>
           )}
         </div>
-
         <div className="p-4 border-t border-dashed space-y-3">
           <div className="space-y-2.5 text-sm">
             <div className="flex justify-between pb-2 border-b border-dashed border-border">
@@ -1005,14 +934,12 @@ const POSPage = () => {
               <span className="font-medium">Rp {subtotal.toLocaleString("id-ID")}</span>
             </div>
           </div>
-
           <div className="flex justify-between items-center pt-2 pb-3 border-t-2 border-dashed border-border">
             <span className="font-bold text-base">TOTAL AKHIR</span>
             <span className="text-2xl font-bold text-primary">
               Rp {finalTotal.toLocaleString("id-ID")}
             </span>
           </div>
-
           <div className="grid grid-cols-3 gap-2">
             <Button
               variant="outline"
@@ -1036,7 +963,6 @@ const POSPage = () => {
           </div>
         </div>
       </Card>
-
       {/* Modal pembayaran - Lazy Loaded */}
       {isPaymentModalOpen && (
         <Suspense fallback={<div />}>
@@ -1044,7 +970,6 @@ const POSPage = () => {
             open={isPaymentModalOpen}
             onClose={() => {
               setIsPaymentModalOpen(false);
-              // Auto focus back to barcode input when payment modal is closed without completing
               setTimeout(() => {
                 barcodeInputRef.current?.focus();
               }, 50);
@@ -1056,7 +981,6 @@ const POSPage = () => {
           />
         </Suspense>
       )}
-
       {/* Modal PLU */}
       {selectedPLUProduct && (
         <PLUModal
@@ -1064,7 +988,6 @@ const POSPage = () => {
           onClose={() => {
             setIsPLUModalOpen(false);
             setSelectedPLUProduct(null);
-            // Auto focus back to barcode input when PLU modal is closed without selection
             setTimeout(() => {
               barcodeInputRef.current?.focus();
             }, 50);
@@ -1074,7 +997,19 @@ const POSPage = () => {
           onSelect={handlePLUSelect}
         />
       )}
-
+      {/* Modal Payment Success */}
+      {successPaymentData && (
+        <PaymentSuccessModal
+          open={isSuccessModalOpen}
+          onClose={handleSuccessModalClose}
+          amount={successPaymentData.amount}
+          orderId={successPaymentData.orderId}
+          paymentMethod={successPaymentData.paymentMethod}
+          paymentTime={successPaymentData.paymentTime}
+          onNewOrder={handleSuccessModalClose}
+          onPrintReceipt={handlePrintFromSuccessModal}
+        />
+      )}
       {/* Modal Held Transactions List */}
       <Dialog open={isHeldListOpen} onOpenChange={setIsHeldListOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh]">
@@ -1084,7 +1019,6 @@ const POSPage = () => {
               Transaksi Di-Hold ({heldTransactions.length})
             </DialogTitle>
           </DialogHeader>
-
           <div className="overflow-y-auto max-h-[60vh]">
             {heldTransactions.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -1132,7 +1066,6 @@ const POSPage = () => {
                         </Button>
                       </div>
                     </div>
-
                     <div className="space-y-1 text-sm">
                       {transaction.cart.slice(0, 3).map((item, index) => (
                         <div key={index} className="flex justify-between text-muted-foreground">
@@ -1158,5 +1091,4 @@ const POSPage = () => {
     </div>
   );
 };
-
 export default POSPage;

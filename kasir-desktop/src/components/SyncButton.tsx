@@ -33,7 +33,7 @@ export const SyncButton = ({
     duplicate_uuids: 0,
   });
 
-  // Load stats on mount and periodically
+
   useEffect(() => {
     const loadStats = async () => {
       const currentStats = await getSyncStats();
@@ -46,7 +46,7 @@ export const SyncButton = ({
     return () => clearInterval(interval);
   }, [getSyncStats]);
 
-  // Show dialog when sync starts
+
   useEffect(() => {
     if (syncProgress.status === "syncing") {
       setShowDialog(true);

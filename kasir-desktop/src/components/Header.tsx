@@ -14,6 +14,7 @@ import {
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { API_CONFIG, API_ENDPOINTS } from "@/config/api";
 import { isElectron } from "@/services/electron-db";
 import { transactionsWrapper } from "@/services/transactions-wrapper";
@@ -21,6 +22,7 @@ import { syncService } from "@/services/sync-service";
 import { authService } from "@/services/auth-service";
 import { SyncProgressDialog } from "@/components/SyncProgressDialog";
 import { DatabaseSettingsDialog } from "@/components/DatabaseSettingsDialog";
+import { BluetoothActivationDialog } from "@/components/BluetoothActivationDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,10 +38,13 @@ interface HeaderProps {
 
 export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [printerConnected, setPrinterConnected] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showBluetoothDialog, setShowBluetoothDialog] = useState(false);
+  const [bluetoothError, setBluetoothError] = useState("");
   const [isSyncingDownload, setIsSyncingDownload] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [dbPath, setDbPath] = useState<string>("");
@@ -55,7 +60,7 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
   });
   const username = localStorage.getItem("username") || "User";
 
-  // Load DB path on mount
+
   useEffect(() => {
     if (isElectron()) {
       window.electronAPI?.app
@@ -67,7 +72,7 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
     }
   }, []);
 
-  // Update time every second
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -76,15 +81,15 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
     return () => clearInterval(timer);
   }, []);
 
-  // Monitor online/offline status with server ping test
+
   useEffect(() => {
-    // Test actual connection to server using products endpoint (guaranteed to work)
+
     const checkServerConnection = async () => {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-        // Use products endpoint with limit=1 (lightweight ping)
+
         const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.PRODUCTS}?page=1&limit=1`, {
           method: "GET",
           signal: controller.signal,
@@ -104,20 +109,20 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
       }
     };
 
-    // Initial check
+
     checkServerConnection();
 
-    // Periodic check every 10 seconds
+
     const intervalId = setInterval(checkServerConnection, 10000);
 
-    // Also listen to browser online/offline events as backup
+
     const handleOnline = () => {
-      console.log("[Header] Browser event: ONLINE");
+
       checkServerConnection(); // Verify with server ping
     };
 
     const handleOffline = () => {
-      console.log("[Header] Browser event: OFFLINE");
+
       setIsOnline(false);
     };
 
@@ -131,7 +136,7 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
     };
   }, []);
 
-  // Check printer status on mount
+
   useEffect(() => {
     const printerDevice = localStorage.getItem("printerDevice");
     if (printerDevice) {
@@ -185,29 +190,29 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
     try {
       const result = await transactionsWrapper.syncToServer();
 
-      // Simple notification - only show if there are synced transactions
+
       if (result.synced.length > 0) {
         toast.success(`Berhasil sync ${result.synced.length} transaksi`, {
           icon: "✓",
           duration: 2000,
         });
 
-        // Sync products from server to update stock (silent)
-        console.log("🔄 Syncing products from server to update stock...");
+
+
         
         try {
           await syncService.syncProductsFromServer();
-          console.log("✅ Products synced from server after transaction upload");
+
           
-          // Invalidate products query to refresh UI
+
           queryClient.invalidateQueries({ queryKey: ["products"] });
         } catch (syncError) {
           console.error("❌ Failed to sync products after upload:", syncError);
-          // Silent fail - will sync on next download
+
         }
       }
 
-      // Only show error if there are REAL failures (not duplicate)
+
       if (result.failed.length > 0) {
         toast.error(`${result.failed.length} transaksi gagal di-sync`, {
           icon: "❌",
@@ -271,7 +276,7 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         result.categories.failed.length +
         result.transactions.failed.length;
 
-      // Show success in dialog
+
       setSyncProgress({
         progress: 100,
         currentItem: "",
@@ -289,20 +294,20 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         },
       });
 
-      // Auto close dialog after 2 seconds
+
       setTimeout(() => {
         setShowProgressDialog(false);
         if (totalSynced > 0) {
-          // Notify parent that data was downloaded
+
           onDataDownloaded?.();
-          // Reload page untuk refresh data
+
           window.location.reload();
         }
       }, 2000);
     } catch (error) {
       console.error("Sync from server error:", error);
 
-      // Show error in dialog
+
       setSyncProgress({
         progress: 0,
         currentItem: "",
@@ -311,7 +316,7 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         stats: { total: 0, current: 0, synced: 0, failed: 0 },
       });
 
-      // Auto close dialog after 3 seconds
+
       setTimeout(() => {
         setShowProgressDialog(false);
       }, 3000);
@@ -320,164 +325,7 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
     }
   };
 
-  const handleScanPrinter = async () => {
-    if (isScanning) return;
 
-    setIsScanning(true);
-    toast.info("Mencari printer...", {
-      icon: "🔍",
-      duration: 2000,
-    });
-
-    try {
-      // Fetch settings to check print mode
-      const settingsResponse = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.SETTINGS}`);
-      const settingsResult = await settingsResponse.json();
-
-      if (settingsResult.status !== "success") {
-        throw new Error("Gagal mengambil pengaturan printer");
-      }
-
-      const settings = settingsResult.data;
-
-      // For Bluetooth mode: Try Web Bluetooth first, fallback to local
-      if (settings.print_via_bluetooth === 1) {
-        try {
-          // Try Web Bluetooth API (for printers that are NOT paired yet)
-          await scanBluetoothPrinter();
-        } catch (btError) {
-          const error = btError as Error;
-          console.log("Bluetooth scan failed, using local mode:", error.message);
-
-          toast.info("Printer Bluetooth terdeteksi di sistem. Menggunakan mode lokal...", {
-            icon: "ℹ️",
-            duration: 2000,
-          });
-
-          const printerName = settings.name_printer_local || "Bluetooth Printer";
-          await checkLocalPrinter(printerName);
-        }
-      } else {
-        // Local printer mode (USB, Network, or Bluetooth paired)
-        await checkLocalPrinter(settings.name_printer_local);
-      }
-    } catch (error) {
-      console.error("Printer scan error:", error);
-      toast.error("Gagal scan printer: " + (error as Error).message, {
-        icon: "❌",
-        style: {
-          background: "#ef4444",
-          color: "white",
-        },
-      });
-    } finally {
-      setIsScanning(false);
-    }
-  };
-
-  const scanBluetoothPrinter = async () => {
-    try {
-      // Check if Web Bluetooth API is available
-      if (!navigator.bluetooth) {
-        throw new Error("Browser tidak support Bluetooth. Gunakan Chrome/Edge.");
-      }
-
-      toast.info("Pilih printer Bluetooth...", {
-        icon: "📱",
-        duration: 3000,
-      });
-
-      // Request Bluetooth device
-      const device = await navigator.bluetooth.requestDevice({
-        filters: [{ services: ["000018f0-0000-1000-8000-00805f9b34fb"] }],
-        optionalServices: ["000018f0-0000-1000-8000-00805f9b34fb"],
-      });
-
-      const server = await device.gatt?.connect();
-      if (!server) throw new Error("Gagal connect ke printer");
-
-      // Save device info
-      localStorage.setItem(
-        "printerDevice",
-        JSON.stringify({
-          name: device.name,
-          id: device.id,
-          type: "bluetooth",
-        })
-      );
-
-      setPrinterConnected(true);
-
-      toast.success(`Printer "${device.name}" terhubung!`, {
-        icon: "✓",
-        style: {
-          background: "#10b981",
-          color: "white",
-        },
-        duration: 3000,
-      });
-
-      // Disconnect after test
-      device.gatt?.disconnect();
-    } catch (err) {
-      const error = err as { name: string };
-      if (error.name === "NotFoundError") {
-        toast.error("Tidak ada printer yang dipilih", {
-          icon: "ℹ️",
-        });
-      } else {
-        throw error;
-      }
-    }
-  };
-
-  const checkLocalPrinter = async (printerName: string) => {
-    if (!printerName) {
-      // If no printer name, still allow but show warning
-      toast.warning("Nama printer belum diatur. Akan menggunakan printer default sistem.", {
-        icon: "⚠️",
-        duration: 3000,
-      });
-
-      localStorage.setItem(
-        "printerDevice",
-        JSON.stringify({
-          name: "Default Printer",
-          type: "local",
-        })
-      );
-
-      setPrinterConnected(true);
-      return;
-    }
-
-    // Check if browser supports printing
-    if (!window.print) {
-      throw new Error("Browser tidak support print");
-    }
-
-    // Save printer info
-    localStorage.setItem(
-      "printerDevice",
-      JSON.stringify({
-        name: printerName,
-        type: "local",
-      })
-    );
-
-    setPrinterConnected(true);
-
-    toast.success(`Printer "${printerName}" siap digunakan!`, {
-      icon: "✓",
-      style: {
-        background: "#10b981",
-        color: "white",
-      },
-      duration: 3000,
-    });
-  };
-
-  // Format date and time in Indonesian
   const formatDate = (date: Date) => {
     const days = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
     const months = [
@@ -511,6 +359,96 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
     return `${hours}:${minutes}:${seconds} WIB`;
   };
 
+  const handleScanPrinter = async () => {
+    if (isScanning) return;
+
+    setIsScanning(true);
+
+    try {
+
+      if (!navigator.bluetooth) {
+        setBluetoothError("Browser tidak support Bluetooth. Gunakan Chrome atau Edge.");
+        setShowBluetoothDialog(true);
+        setIsScanning(false);
+        return;
+      }
+
+      toast.info("Mencari printer Bluetooth...", {
+        icon: "🔍",
+        duration: 3000,
+        description: "Pastikan lampu printer BERKEDIP CEPAT (mode pairing)",
+      });
+
+
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: ["000018f0-0000-1000-8000-00805f9b34fb"] }],
+        optionalServices: ["000018f0-0000-1000-8000-00805f9b34fb"],
+      });
+
+      const server = await device.gatt?.connect();
+      if (!server) throw new Error("Gagal connect ke printer");
+
+
+      localStorage.setItem(
+        "printerDevice",
+        JSON.stringify({
+          name: device.name,
+          id: device.id,
+          type: "bluetooth",
+        })
+      );
+
+      setPrinterConnected(true);
+
+      toast.success(`Printer "${device.name}" terhubung!`, {
+        icon: "✓",
+        style: {
+          background: "#10b981",
+          color: "white",
+        },
+        duration: 3000,
+      });
+
+
+      device.gatt?.disconnect();
+    } catch (err) {
+      const error = err as { name: string; message: string };
+      
+      if (error.name === "NotFoundError") {
+        toast.warning("Tidak ada printer yang dipilih", {
+          icon: "⚠️",
+          description: "Pastikan printer dalam mode pairing (lampu berkedip)",
+          duration: 5000,
+        });
+      } else if (error.name === "NotAllowedError") {
+        toast.error("Permission ditolak. Coba lagi dan izinkan akses Bluetooth.", {
+          icon: "❌",
+          duration: 4000,
+        });
+      } else if (error.message.includes("Bluetooth adapter not available") || 
+                 error.message.includes("not available")) {
+        setBluetoothError("Bluetooth tidak aktif atau tidak tersedia di perangkat Anda. Aktifkan Bluetooth di Windows Settings (Win + I).");
+        setShowBluetoothDialog(true);
+      } else if (error.message.includes("User cancelled") || 
+                 error.name === "NotSupportedError") {
+
+
+      } else {
+
+        toast.error("Gagal scan printer. Pastikan: 1) Printer dalam mode pairing (lampu berkedip), 2) Printer tidak paired di Windows, 3) Bluetooth aktif", {
+          icon: "❌",
+          style: {
+            background: "#ef4444",
+            color: "white",
+          },
+          duration: 6000,
+        });
+      }
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   return (
     <>
       <SyncProgressDialog
@@ -528,6 +466,12 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         open={showDbSettingsDialog}
         onOpenChange={setShowDbSettingsDialog}
         currentPath={dbPath}
+      />
+
+      <BluetoothActivationDialog
+        open={showBluetoothDialog}
+        onOpenChange={setShowBluetoothDialog}
+        errorMessage={bluetoothError}
       />
 
       <header className="h-16 border-b bg-card flex items-center px-6 gap-6">
@@ -651,6 +595,24 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
               <Maximize className="w-5 h-5 text-foreground" />
             )}
           </button>
+
+          {/* Printer Bluetooth Button */}
+          <button
+            onClick={handleScanPrinter}
+            disabled={isScanning}
+            className="relative p-2 hover:bg-secondary rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Scan Printer Bluetooth"
+          >
+            <Printer
+              className={`w-5 h-5 ${printerConnected ? "text-green-500" : "text-foreground"} ${
+                isScanning ? "animate-pulse" : ""
+              }`}
+            />
+            {printerConnected && (
+              <span className="absolute top-1 right-1 w-2 h-2 bg-green-500 rounded-full"></span>
+            )}
+          </button>
+
           {/* Printer Button - Temporarily Disabled */}
           {/* <button 
           onClick={handleScanPrinter}

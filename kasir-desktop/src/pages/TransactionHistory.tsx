@@ -52,10 +52,10 @@ const TransactionHistory = () => {
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Filter transactions
+
   const filteredTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
-      // Search filter
+
       const matchesSearch =
         searchQuery === "" ||
         transaction.transaction_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,7 +63,7 @@ const TransactionHistory = () => {
         (transaction.uuid?.toLowerCase()?.includes(searchQuery.toLowerCase()) ?? false) ||
         (transaction.id !== undefined && transaction.id.toString().includes(searchQuery));
 
-      // Date filter
+
       const matchesDate =
         !startDate ||
         !endDate ||
@@ -76,14 +76,14 @@ const TransactionHistory = () => {
     });
   }, [transactions, searchQuery, startDate, endDate]);
 
-  // Pagination
+
   const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
   const paginatedTransactions = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredTransactions, currentPage]);
 
-  // Reset to page 1 when filter changes
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, startDate, endDate]);
@@ -127,7 +127,7 @@ const TransactionHistory = () => {
       setShowDetailDialog(true);
     } catch (error) {
       console.error("Failed to load transaction detail:", error);
-      // Fallback to basic transaction data
+
       setSelectedTransaction(transaction);
       setShowDetailDialog(true);
     }
@@ -147,7 +147,7 @@ const TransactionHistory = () => {
         style: { background: "#10b981", color: "white" },
       });
 
-      // Refresh data
+
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       setShowDetailDialog(false);
       setSelectedTransaction(null);
@@ -176,7 +176,7 @@ const TransactionHistory = () => {
         style: { background: "#10b981", color: "white" },
       });
 
-      // Refresh data
+
       await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       setShowDetailDialog(false);
       setSelectedTransaction(null);
@@ -403,7 +403,7 @@ const TransactionHistory = () => {
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter((page) => {
-                      // Show first, last, current, and adjacent pages
+
                       return page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1;
                     })
                     .map((page, index, array) => (

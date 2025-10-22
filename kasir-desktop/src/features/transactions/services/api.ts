@@ -77,7 +77,7 @@ export const transactionsApi = {
         errorDetail = JSON.stringify(errorData, null, 2); // Pretty print
         errorMessage = errorData.message || errorData.error || "Unknown error";
         
-        // SUPER DETAILED LOG
+
         console.error("❌❌❌ [TransactionsAPI] SYNC ERROR DETAIL ❌❌❌");
         console.error("Status Code:", res.status);
         console.error("Status Text:", res.statusText);
@@ -102,7 +102,7 @@ export const transactionsApi = {
     }
 
     const result = await res.json();
-    console.log("[TransactionsAPI] Transaction created:", result.status);
+
     return result;
   },
 

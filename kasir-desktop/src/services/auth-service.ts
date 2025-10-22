@@ -41,7 +41,7 @@ class AuthService {
 
       const result = await response.json();
 
-      // Handle API response format: {status, message, data}
+
       if (result.status === "success" && result.data) {
         const user: AuthUser = {
           id: parseInt(result.data.id),
@@ -50,13 +50,13 @@ class AuthService {
           role: result.data.role,
         };
 
-        // Generate simple token dari user ID (karena API tidak return token)
-        // Untuk production, API harus return JWT token
+
+
         const fakeToken = btoa(
           JSON.stringify({ id: user.id, email: user.email, timestamp: Date.now() })
         );
 
-        // Simpan token dan user data
+
         this.setToken(fakeToken);
         this.setUser(user);
 

@@ -6,7 +6,7 @@ import {
   TransactionsPaginationResponse,
 } from "@/features/transactions/services/api";
 
-// Helper untuk log hanya di development
+
 const isDev = import.meta.env.MODE === 'development';
 const log = (...args: any[]) => {
   if (isDev) console.log(...args);
@@ -18,7 +18,7 @@ const logError = (...args: any[]) => {
 export const transactionsWrapper = {
   async getAll(params?: TransactionsPaginationParams): Promise<TransactionsPaginationResponse> {
     if (isElectron()) {
-      // Mode Electron: pakai SQLite
+
       const transactions = await electronTransactionService.getAll();
 
       const parsed = (transactions as Record<string, unknown>[]).map((tx) => ({
@@ -26,7 +26,7 @@ export const transactionsWrapper = {
         items: typeof tx.items === "string" ? JSON.parse(tx.items) : tx.items,
         transaction_number: tx.uuid,
         cash_received: tx.payment_amount,
-        // Map untuk TransactionsPage compatibility
+
         nama_customer: tx.customer_name || tx.name,
         total_harga: tx.total,
         nominal_bayar: tx.payment_amount,
@@ -36,7 +36,7 @@ export const transactionsWrapper = {
         change: tx.change_amount,
       }));
 
-      // Filter
+
       let filtered = parsed;
       if (params?.search) {
         const search = params.search.toLowerCase();
@@ -49,7 +49,7 @@ export const transactionsWrapper = {
         );
       }
 
-      // Pagination
+
       const page = params?.page || 1;
       const limit = params?.limit || 20;
       const total = filtered.length;
@@ -70,14 +70,14 @@ export const transactionsWrapper = {
         },
       };
     } else {
-      // Mode Browser: pakai API
+
       return transactionsApi.getAll(params);
     }
   },
 
   async create(data: CreateTransactionData) {
     if (isElectron()) {
-      // Mode Electron: simpan ke SQLite
+
       const transaction = {
         uuid: data.transaction_number || crypto.randomUUID(),
         total: data.total,
@@ -107,7 +107,7 @@ export const transactionsWrapper = {
         },
       };
     } else {
-      // Mode Browser: kirim ke API
+
       return transactionsApi.create(data);
     }
   },
@@ -180,7 +180,7 @@ export const transactionsWrapper = {
           throw new Error(`Invalid transaction data after fix attempts: UUID=${!!validatedUuid}, Total=${validatedTotal}, Items=${validatedItems?.length || 0}`);
         }
 
-        // Ensure all items have valid product_id and required fields
+
         const processedItems = (validatedItems as Record<string, unknown>[]).map((item, idx) => {
           const productId = item.product_id || 1;
           const productName = item.product_name || item.product_name_snapshot || `Product ${idx + 1}`;
@@ -222,7 +222,7 @@ export const transactionsWrapper = {
         try {
           result = await transactionsApi.create(payload);
         } catch (apiError) {
-          // Log full error details for debugging
+
           const err = apiError as any;
           logError(`   ❌ API Error for ${tx.uuid}:`, {
             message: err.message,

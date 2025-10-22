@@ -11,7 +11,7 @@ const Index = () => {
   const [showFirstTimeSetup, setShowFirstTimeSetup] = useState(false);
   const [isCheckingSetup, setIsCheckingSetup] = useState(true);
 
-  // Check first-time setup AFTER login
+
   useEffect(() => {
     const checkFirstTimeSetup = async () => {
       if (!isElectron()) {
@@ -20,29 +20,29 @@ const Index = () => {
       }
 
       try {
-        // Check if config exists (dbPath sudah di-set)
+
         const hasConfig = await window.electronAPI!.app.hasConfig();
 
         if (!hasConfig) {
-          // Belum setup, tampilkan dialog
-          console.log("[Index] No config found, showing first time setup");
+
+
           setShowFirstTimeSetup(true);
           setIsCheckingSetup(false);
           return;
         }
 
-        // Config ada, check apakah database file exists
+
         const dbExists = await window.electronAPI!.app.checkDbExists();
 
         if (!dbExists) {
-          // Database hilang, minta setup ulang
+
           console.warn("[Index] Config exists but database missing, showing setup");
           setShowFirstTimeSetup(true);
           setIsCheckingSetup(false);
           return;
         }
 
-        console.log("[Index] Setup check complete, database ready");
+
         setIsCheckingSetup(false);
       } catch (error) {
         console.error("Error checking setup:", error);
@@ -55,7 +55,7 @@ const Index = () => {
 
   const handleFirstTimeSetupComplete = async (dbPath: string) => {
     try {
-      console.log("[Index] Setting database path:", dbPath);
+
       
       const result = await window.electronAPI!.app.setDbPath(dbPath);
       
@@ -67,16 +67,16 @@ const Index = () => {
         return;
       }
 
-      console.log("[Index] Database created at:", result.newPath);
+
       setShowFirstTimeSetup(false);
 
-      // Download langsung setelah setup
+
       toast.success("Database berhasil dibuat! Memulai download data...", {
         icon: "📥",
         duration: 2000,
       });
 
-      // Delay kecil agar toast terlihat
+
       setTimeout(() => {
         handleDownloadData();
       }, 500);
@@ -93,7 +93,7 @@ const Index = () => {
 
   const handleDownloadData = async () => {
     setIsDownloading(true);
-    console.log("📥 ========== DOWNLOAD DATA STARTED ==========");
+
     
     toast.info("Memulai download data dari server...", {
       icon: "📥",
@@ -101,25 +101,25 @@ const Index = () => {
     });
 
     try {
-      // Download products
-      console.log("📦 Step 1/3: Downloading products...");
+
+
       toast.info("Mengunduh produk...", { icon: "📦", duration: 1500 });
       const productsResult = await syncService.syncProductsFromServer();
-      console.log(`✅ Products synced: ${productsResult.synced.length} success, ${productsResult.failed.length} failed`);
 
-      // Download categories
-      console.log("📂 Step 2/3: Downloading categories...");
+
+
+
       toast.info("Mengunduh kategori...", { icon: "📂", duration: 1500 });
       const categoriesResult = await syncService.syncCategoriesFromServer();
-      console.log(`✅ Categories synced: ${categoriesResult.synced.length} success, ${categoriesResult.failed.length} failed`);
 
-      // Download transactions
-      console.log("💰 Step 3/3: Downloading transactions...");
+
+
+
       toast.info("Mengunduh transaksi...", { icon: "💰", duration: 1500 });
       const transactionsResult = await syncService.syncTransactionsFromServer();
-      console.log(`✅ Transactions synced: ${transactionsResult.synced.length} success, ${transactionsResult.failed.length} failed`);
 
-      console.log("✅ ========== DOWNLOAD COMPLETED ==========");
+
+
       toast.success("Data berhasil didownload! Aplikasi akan reload...", {
         icon: "✓",
         style: {
@@ -129,7 +129,7 @@ const Index = () => {
         duration: 2000,
       });
 
-      // Reload page untuk refresh data
+
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -147,7 +147,7 @@ const Index = () => {
     }
   };
 
-  // Show loading while checking setup
+
   if (isCheckingSetup) {
     return (
       <div className="flex items-center justify-center min-h-screen">

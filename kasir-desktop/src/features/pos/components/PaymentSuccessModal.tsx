@@ -179,7 +179,7 @@ export const PaymentSuccessModal = ({
   onNewOrder,
   onPrintReceipt,
 }: PaymentSuccessModalProps) => {
-  // const lottieRef = useRef(null);
+
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
@@ -228,7 +228,7 @@ export const PaymentSuccessModal = ({
 
           {/* Success Message */}
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Payment Success!
+            Transaksi Berhasil!
           </h2>
 
           {/* Amount */}
@@ -263,7 +263,7 @@ export const PaymentSuccessModal = ({
               className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-semibold"
               size="lg"
             >
-              New Order
+              Lanjutkan
             </Button>
 
             {onPrintReceipt && (
@@ -274,7 +274,7 @@ export const PaymentSuccessModal = ({
                 size="lg"
               >
                 <Printer className="w-4 h-4 mr-2" />
-                Print Receipt
+                Print Struk
               </Button>
             )}
           </div>

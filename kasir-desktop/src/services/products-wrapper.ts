@@ -5,14 +5,14 @@ import {
   ProductsPaginationResponse,
 } from "@/features/products/services/api";
 
-// Wrapper service yang bisa pakai Electron DB atau API
+
 export const productsWrapper = {
   async getAll(params?: ProductsPaginationParams): Promise<ProductsPaginationResponse> {
     if (isElectron()) {
-      // Mode Electron: pakai SQLite
+
       const products = await electronProductService.getAll();
 
-      // Filter & pagination manual
+
       let filtered = products;
 
       if (params?.search) {
@@ -30,7 +30,7 @@ export const productsWrapper = {
         filtered = filtered.filter((p) => String(p.category) === params.category_id?.toString());
       }
 
-      // Pagination
+
       const page = params?.page || 1;
       const limit = params?.limit || 50;
       const total = filtered.length;
@@ -51,7 +51,7 @@ export const productsWrapper = {
         },
       };
     } else {
-      // Mode Browser: pakai API
+
       return productsApi.getAll(params);
     }
   },

@@ -31,7 +31,7 @@ export const DatabaseSettingsDialog = ({
   const handleSelectFolder = async () => {
     setIsSelecting(true);
     try {
-      // @ts-expect-error - electronAPI is injected by preload
+
       const result = await window.electronAPI.dialog.selectFolder();
 
       if (!result.canceled && result.folderPath) {
@@ -63,11 +63,11 @@ export const DatabaseSettingsDialog = ({
         duration: 5000,
       });
 
-      // Close dialog
+
       setTimeout(() => {
         onOpenChange(false);
 
-        // Ask user to restart
+
         if (
           confirm("Aplikasi perlu di-restart untuk menggunakan database baru. Restart sekarang?")
         ) {

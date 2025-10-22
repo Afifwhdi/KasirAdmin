@@ -26,7 +26,7 @@ export const FirstTimeSetupDialog = ({ open, onComplete }: FirstTimeSetupDialogP
   const handleSelectFolder = async () => {
     setIsSelecting(true);
     try {
-      // @ts-expect-error - electronAPI is injected by preload
+
       const result = await window.electronAPI.dialog.selectFolder();
 
       if (!result.canceled && result.folderPath) {

@@ -48,27 +48,27 @@ export const PLUModal = ({ open, onClose, productName, basePrice, onSelect }: PL
     }, 100);
   };
 
-  // --- Arrow key navigation
+
   useEffect(() => {
     if (!open) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Arrow Up
+
       if (e.key === "ArrowUp") {
         e.preventDefault();
         setSelectedIndex((prev) => Math.max(0, prev - 1));
       }
-      // Arrow Down
+
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedIndex((prev) => Math.min(pluOptions.length - 1, prev + 1));
       }
-      // Enter untuk select
+
       if (e.key === "Enter") {
         e.preventDefault();
         handleSelect(pluOptions[selectedIndex]);
       }
-      // Escape untuk close
+
       if (e.key === "Escape") {
         e.preventDefault();
         onClose();
@@ -79,7 +79,7 @@ export const PLUModal = ({ open, onClose, productName, basePrice, onSelect }: PL
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [open, selectedIndex]);
 
-  // Reset selected index saat modal dibuka
+
   useEffect(() => {
     if (open) {
       setSelectedIndex(0);

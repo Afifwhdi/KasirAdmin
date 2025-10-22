@@ -8,21 +8,21 @@ import { Suspense, lazy, useEffect } from "react";
 import { isElectron } from "@/lib/utils";
 import { transactionService } from "@/services/electron-db";
 
-// LAZY LOAD PAGES
+
 const Login = lazy(() => import("./pages/Login"));
 const Index = lazy(() => import("./pages/Index"));
 const POSPage = lazy(() => import("./pages/POSPage"));
 const TransactionsPage = lazy(() => import("./pages/TransactionsPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Loading component
+
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen">
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
   </div>
 );
 
-// Optimized Query Client
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -36,12 +36,12 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  // Cleanup old failed sync transactions on app start (Electron only)
+
   useEffect(() => {
     const cleanupOldSyncs = async () => {
       if (isElectron()) {
         try {
-          // Clear transactions older than 1 day that failed to sync
+
           await transactionService.clearOldFailedSyncs(1);
         } catch (error) {
           console.error('Failed to cleanup old sync transactions:', error);

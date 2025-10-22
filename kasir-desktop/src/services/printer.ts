@@ -1,4 +1,4 @@
-// Thermal Printer Service for Receipt
+
 export interface ReceiptData {
   storeName: string;
   storeAddress: string;
@@ -26,7 +26,7 @@ export class PrinterService {
   private static ESC = "\x1B";
   private static GS = "\x1D";
 
-  // Command constants for thermal printer
+
   private static COMMANDS = {
     INIT: "\x1B\x40",
     ALIGN_LEFT: "\x1B\x61\x00",
@@ -42,77 +42,85 @@ export class PrinterService {
   };
 
   /**
-   * Build thermal printer commands for receipt
+   * Build thermal printer commands for receipt (Offline Template)
+   * Optimized for 58mm printer (OKAY 58D) - 32 characters width
    */
   static buildReceiptCommands(data: ReceiptData): string {
     let commands = "";
 
-    // Initialize printer
+
     commands += this.COMMANDS.INIT;
 
-    // Header - Center aligned
+
     commands += this.COMMANDS.ALIGN_CENTER;
     commands += this.COMMANDS.FONT_LARGE;
     commands += this.COMMANDS.BOLD_ON;
-    commands += data.storeName + this.COMMANDS.LINE_FEED;
+    commands += "DILLA CELL" + this.COMMANDS.LINE_FEED;
     commands += this.COMMANDS.BOLD_OFF;
     commands += this.COMMANDS.FONT_NORMAL;
-    commands += data.storeAddress + this.COMMANDS.LINE_FEED;
-    commands += data.storePhone + this.COMMANDS.LINE_FEED;
-    commands += this.line(48, "-") + this.COMMANDS.LINE_FEED;
+    commands += "Ngestikarya, waway karya," + this.COMMANDS.LINE_FEED;
+    commands += "lampung timur" + this.COMMANDS.LINE_FEED;
+    commands += "Telp: 088287013223" + this.COMMANDS.LINE_FEED;
+    commands += this.line(32, "=") + this.COMMANDS.LINE_FEED;
 
-    // Transaction info - Left aligned
+
     commands += this.COMMANDS.ALIGN_LEFT;
-    commands += `${data.date}${this.pad("", 20)}Kasir` + this.COMMANDS.LINE_FEED;
-    commands += `${data.time}${this.pad("", 16)}${data.cashier}` + this.COMMANDS.LINE_FEED;
+    commands += `${data.date}${this.pad("", 4)}Kasir` + this.COMMANDS.LINE_FEED;
+    commands += `${data.time}${this.pad("", 0)}${data.cashier}` + this.COMMANDS.LINE_FEED;
     commands += `${data.customerName}` + this.COMMANDS.LINE_FEED;
     commands += `No.${data.transactionNumber}` + this.COMMANDS.LINE_FEED;
-    commands += this.line(48, "-") + this.COMMANDS.LINE_FEED;
+    commands += this.line(32, "-") + this.COMMANDS.LINE_FEED;
 
-    // Items
+
     data.items.forEach((item, index) => {
-      // Item number and name
-      commands += `${index + 1}. ${item.name}` + this.COMMANDS.LINE_FEED;
 
-      // Quantity x Price = Subtotal (right aligned)
-      const qtyPrice = `${item.quantity} ${this.formatUnit(item)} x ${this.formatCurrency(item.price)}`;
-      const subtotal = this.formatCurrency(item.subtotal);
-      const spaces = 48 - qtyPrice.length - subtotal.length;
+      const itemName = item.name.length > 28 ? item.name.substring(0, 28) : item.name;
+      commands += `${index + 1}. ${itemName}` + this.COMMANDS.LINE_FEED;
+
+
+      const qtyPriceShort = `${item.quantity} ${this.formatUnit(item)} x ${this.formatCurrencyShort(item.price)}`;
+      const subtotalShort = this.formatCurrencyShort(item.subtotal);
+      const spaces = 32 - qtyPriceShort.length - subtotalShort.length;
       commands +=
-        `  ${qtyPrice}${this.pad("", Math.max(0, spaces))}${subtotal}` + this.COMMANDS.LINE_FEED;
+        `  ${qtyPriceShort}${this.pad("", Math.max(0, spaces))}${subtotalShort}` + this.COMMANDS.LINE_FEED;
     });
 
-    commands += this.line(48, "-") + this.COMMANDS.LINE_FEED;
+    commands += this.line(32, "-") + this.COMMANDS.LINE_FEED;
 
-    // Total Qty
+
     commands += `Total QTY : ${data.totalQty}` + this.COMMANDS.LINE_FEED;
     commands += this.COMMANDS.LINE_FEED;
 
-    // Totals - Right aligned
+
     commands +=
-      this.lineTwoColumn("Sub Total", this.formatCurrency(data.subtotal), 48) +
+      this.lineTwoColumn("Sub Total", this.formatCurrencyShort(data.subtotal), 32) +
       this.COMMANDS.LINE_FEED;
     commands += this.COMMANDS.BOLD_ON;
     commands +=
-      this.lineTwoColumn("Total", this.formatCurrency(data.total), 48) + this.COMMANDS.LINE_FEED;
+      this.lineTwoColumn("Total", this.formatCurrencyShort(data.total), 32) + this.COMMANDS.LINE_FEED;
     commands += this.COMMANDS.BOLD_OFF;
     commands +=
       this.lineTwoColumn(
         `Bayar (${data.paymentMethod})`,
-        this.formatCurrency(data.amountPaid),
-        48
+        this.formatCurrencyShort(data.amountPaid),
+        32
       ) + this.COMMANDS.LINE_FEED;
     commands +=
-      this.lineTwoColumn("Kembali", this.formatCurrency(data.change), 48) + this.COMMANDS.LINE_FEED;
+      this.lineTwoColumn("Kembali", this.formatCurrencyShort(data.change), 32) + this.COMMANDS.LINE_FEED;
 
-    // Footer
+
     commands += this.COMMANDS.LINE_FEED;
+    commands += this.line(32, "=") + this.COMMANDS.LINE_FEED;
     commands += this.COMMANDS.ALIGN_CENTER;
-    commands += "Terima kasih telah berbelanja di toko kami" + this.COMMANDS.LINE_FEED;
+    commands += "Terima kasih sudah" + this.COMMANDS.LINE_FEED;
+    commands += "belanja di Dilla Store" + this.COMMANDS.LINE_FEED;
+    commands += "Semoga puas dengan" + this.COMMANDS.LINE_FEED;
+    commands += "layanan kami!" + this.COMMANDS.LINE_FEED;
+    commands += "Hubungi: 088287013223" + this.COMMANDS.LINE_FEED;
     commands += this.COMMANDS.LINE_FEED;
     commands += this.COMMANDS.LINE_FEED;
 
-    // Cut paper
+
     commands += this.COMMANDS.CUT_PAPER;
 
     return commands;
@@ -123,7 +131,7 @@ export class PrinterService {
    */
   static async printViaBluetooth(data: ReceiptData): Promise<void> {
     try {
-      // Request Bluetooth device
+
       const device = await navigator.bluetooth.requestDevice({
         filters: [{ services: ["000018f0-0000-1000-8000-00805f9b34fb"] }],
         optionalServices: ["000018f0-0000-1000-8000-00805f9b34fb"],
@@ -137,12 +145,12 @@ export class PrinterService {
         "00002af1-0000-1000-8000-00805f9b34fb"
       );
 
-      // Build and send commands
+
       const commands = this.buildReceiptCommands(data);
       const encoder = new TextEncoder();
       const bytes = encoder.encode(commands);
 
-      // Send in chunks (max 20 bytes per write for Bluetooth)
+
       const chunkSize = 20;
       for (let i = 0; i < bytes.length; i += chunkSize) {
         const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
@@ -162,8 +170,8 @@ export class PrinterService {
    */
   static async printViaLocal(data: ReceiptData, printerName: string): Promise<void> {
     try {
-      // This would need a local server/electron app to handle actual printing
-      // For now, we'll just open print dialog with formatted HTML
+
+
       const htmlContent = this.buildReceiptHTML(data);
 
       const printWindow = window.open("", "_blank");
@@ -172,7 +180,7 @@ export class PrinterService {
       printWindow.document.write(htmlContent);
       printWindow.document.close();
 
-      // Wait for content to load
+
       await this.delay(500);
 
       printWindow.print();
@@ -184,7 +192,7 @@ export class PrinterService {
   }
 
   /**
-   * Build HTML for print preview/local printing
+   * Build HTML for print preview/local printing (Offline Template - DILLA CELL)
    */
   private static buildReceiptHTML(data: ReceiptData): string {
     const itemsHTML = data.items
@@ -223,15 +231,16 @@ export class PrinterService {
           .center { text-align: center; }
           .bold { font-weight: bold; }
           .large { font-size: 16px; }
-          .line { border-bottom: 1px dashed #000; margin: 8px 0; }
+          .line { border-bottom: 2px solid #000; margin: 8px 0; }
           .two-column { display: flex; justify-content: space-between; }
         </style>
       </head>
       <body>
         <div class="center">
-          <div class="large bold">${data.storeName}</div>
-          <div>${data.storeAddress}</div>
-          <div>${data.storePhone}</div>
+          <div class="large bold">DILLA CELL</div>
+          <div>Ngestikarya, waway karya,</div>
+          <div>lampung timur</div>
+          <div>Telp: 088287013223</div>
         </div>
         <div class="line"></div>
         
@@ -255,20 +264,34 @@ export class PrinterService {
         <div class="two-column"><span>Kembali</span><span>${this.formatCurrency(data.change)}</span></div>
         
         <br/>
-        <div class="center">Terima kasih telah berbelanja di toko kami</div>
+        <div class="line"></div>
+        <div class="center">
+          <div>Terima kasih sudah belanja</div>
+          <div>di Dilla Store</div>
+          <div>Semoga puas dengan layanan kami!</div>
+          <div>Hubungi kami: 088287013223</div>
+        </div>
         <br/><br/>
       </body>
       </html>
     `;
   }
 
-  // Helper functions
+
   private static formatCurrency(amount: number): string {
     return "Rp " + amount.toLocaleString("id-ID");
   }
 
+  private static formatCurrencyShort(amount: number): string {
+
+    if (amount >= 1000000) {
+      return "Rp " + (amount / 1000).toFixed(0) + "K";
+    }
+    return "Rp " + amount.toLocaleString("id-ID");
+  }
+
   private static formatUnit(item: { quantity: number }): string {
-    // Check if it's PLU item (decimal quantity)
+
     if (item.quantity % 1 !== 0) {
       return "Kg";
     }

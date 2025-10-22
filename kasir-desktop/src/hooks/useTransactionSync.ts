@@ -95,7 +95,7 @@ export const useTransactionSync = () => {
             throw error;
           }
           const waitTime = Math.pow(2, retryCount - 1) * 1000;
-          console.log(`Retry ${retryCount}/${maxRetries} after ${waitTime}ms...`);
+
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }

@@ -55,12 +55,12 @@ export const syncService = {
     let totalProducts = 0;
 
     try {
-      // Fetch semua produk dari server dengan safety limit
+
       while (page <= MAX_PAGES) {
         let response;
         let retries = 0;
 
-        // Retry logic dengan exponential backoff
+
         while (retries < MAX_RETRIES) {
           try {
             response = await productsApi.getAll({ page, limit });
@@ -73,7 +73,7 @@ export const syncService = {
               );
             }
 
-            // Exponential backoff
+
             await new Promise((resolve) => setTimeout(resolve, Math.pow(2, retries) * 1000));
           }
         }
@@ -82,16 +82,16 @@ export const syncService = {
           break;
         }
 
-        // Set total from first response
+
         if (page === 1 && response.meta) {
           totalProducts = response.meta.total;
         }
 
-        // Batch insert/update untuk better performance
+
         for (const product of response.data) {
           totalProcessed++;
 
-          // Report progress
+
           if (onProgress) {
             onProgress({
               type: "products",
@@ -105,10 +105,10 @@ export const syncService = {
           }
 
           try {
-            // Use UUID (server ID) as unique identifier
+
             const productUuid = product.id?.toString() || product.uuid || crypto.randomUUID();
             
-            // Check apakah produk sudah ada (by UUID)
+
             const existing = await productService.getByUuid(productUuid);
 
             const productData = {
@@ -121,11 +121,11 @@ export const syncService = {
             };
 
             if (existing) {
-              // Update existing product
+
               console.log(`📝 Updating product: ${product.name} (UUID: ${productUuid}, Stock: ${product.stock})`);
               await productService.update(existing.id, productData);
             } else {
-              // Insert new product
+
               console.log(`➕ Creating product: ${product.name} (UUID: ${productUuid}, Stock: ${product.stock})`);
               await productService.create({
                 uuid: productUuid,
@@ -140,12 +140,12 @@ export const syncService = {
           }
         }
 
-        // Check jika masih ada page berikutnya
+
         if (response.meta && page >= response.meta.totalPages) {
           break;
         }
 
-        // Safety check: jika totalPages tidak ada, break setelah 10 pages
+
         if (!response.meta?.totalPages && page >= 10) {
           console.warn("No totalPages metadata, stopping after 10 pages");
           break;
@@ -154,7 +154,7 @@ export const syncService = {
         page++;
       }
 
-      console.log(`\n✅ Sync products completed: ${synced.length} synced, ${failed.length} failed`);
+
       console.log(`📦 Total products in database: ${await productService.count()}`);
       
       return { synced, failed };
@@ -176,7 +176,7 @@ export const syncService = {
     const failed = [];
 
     try {
-      // Fetch categories dari server
+
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.CATEGORIES}`);
 
       if (!response.ok) {
@@ -187,12 +187,12 @@ export const syncService = {
       const categories = data.data || [];
       const totalCategories = categories.length;
 
-      // Insert ke SQLite
+
       let processed = 0;
       for (const category of categories) {
         processed++;
 
-        // Report progress
+
         if (onProgress) {
           onProgress({
             type: "categories",
@@ -211,7 +211,7 @@ export const syncService = {
           });
           synced.push(category);
         } catch (error) {
-          // Skip jika sudah ada (UNIQUE constraint)
+
           if (error.message && error.message.includes("UNIQUE")) {
             synced.push(category);
           } else {
@@ -240,7 +240,7 @@ export const syncService = {
     const failed = [];
 
     try {
-      // Fetch transactions dari server
+
       const response = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`);
 
       if (!response.ok) {
@@ -251,12 +251,12 @@ export const syncService = {
       const transactions = data.data || [];
       const totalTransactions = transactions.length;
 
-      // Insert ke SQLite
+
       let processed = 0;
       for (const transaction of transactions) {
         processed++;
 
-        // Report progress
+
         if (onProgress) {
           onProgress({
             type: "transactions",
@@ -270,12 +270,12 @@ export const syncService = {
         }
 
         try {
-          // Check if transaction already exists by uuid
+
           const uuid = transaction.transaction_number || transaction.uuid || crypto.randomUUID();
           const existing = await transactionService.getByUuid(uuid);
 
           if (!existing) {
-            // Map API response to local DB structure
+
             await transactionService.create({
               uuid: uuid,
               total: transaction.total || transaction.total_harga || 0,
@@ -289,12 +289,12 @@ export const syncService = {
 
             synced.push(transaction);
           } else {
-            // Already exists, skip (tidak dimasukkan ke synced agar tidak double count)
-            console.log("Transaction already exists:", uuid);
+
+
           }
         } catch (error) {
           console.error("Failed to insert transaction:", transaction, error);
-          // Skip if UNIQUE constraint (already exists)
+
           if (error.message && error.message.includes("UNIQUE")) {
             console.log(
               "Transaction duplicate (UNIQUE constraint):",
@@ -328,7 +328,7 @@ export const syncService = {
       transactions: { synced: [], failed: [] },
     };
 
-    // Sync categories first
+
     try {
       const catResult = await this.syncCategoriesFromServer(onProgress);
       results.categories = catResult;
@@ -336,7 +336,7 @@ export const syncService = {
       console.error("Failed to sync categories:", error);
     }
 
-    // Then sync products
+
     try {
       const prodResult = await this.syncProductsFromServer(onProgress);
       results.products = prodResult;
@@ -344,7 +344,7 @@ export const syncService = {
       console.error("Failed to sync products:", error);
     }
 
-    // Sync transactions only if requested (first-time setup)
+
     if (includeTransactions) {
       try {
         const txResult = await this.syncTransactionsFromServer(onProgress);

@@ -33,43 +33,43 @@ export const productsApi = {
     }`;
 
     try {
-      console.log("🌐 Fetching products from API:", url);
+
       const res = await fetch(url);
       if (!res.ok) throw new Error("Gagal memuat produk");
       const data = await res.json();
-      console.log("✅ API fetch success:", data.meta);
+
       return data;
     } catch (error) {
-      // OFFLINE FALLBACK: Load from local SQLite
+
       if (isElectron()) {
-        console.log("⚠️ API fetch failed, loading from local database...");
+
         
         try {
           const limit = params?.limit || 1000;
           const page = params?.page || 1;
           const offset = (page - 1) * limit;
           
-          // Build filter params for SQLite
+
           const filterParams: any = {
             limit,
             offset,
           };
           
-          // Add category filter if needed
+
           if (params?.category_id) {
             filterParams.category = params.category_id.toString();
-            console.log(`🔍 Filtering by category: ${filterParams.category}`);
+
           }
           
-          // Add search filter if needed
+
           if (params?.search) {
             filterParams.search = params.search;
-            console.log(`🔍 Searching for: ${params.search}`);
+
           }
           
-          console.log(`🔍 Loading products from SQLite with filters:`, filterParams);
+
           
-          // Use new method with filters applied in SQL query
+
           const products = await productService.getAllWithFilters(filterParams);
           const totalCount = await productService.countWithFilters({
             category: filterParams.category,

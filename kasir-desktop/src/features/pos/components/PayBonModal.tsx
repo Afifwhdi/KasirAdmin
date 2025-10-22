@@ -27,13 +27,13 @@ export const PayBonModal = ({
 
   const change = Math.max(0, amountPaid - total);
 
-  // Reset values and auto-focus when modal opens
+
   useEffect(() => {
     if (open) {
       setAmountPaid(total);
       setDisplayValue(total.toLocaleString("id-ID"));
 
-      // Auto-focus to amount input
+
       setTimeout(() => {
         amountInputRef.current?.focus();
         amountInputRef.current?.select();
@@ -41,7 +41,7 @@ export const PayBonModal = ({
     }
   }, [open, total]);
 
-  // Handle currency input change
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, ""); // Remove non-numeric
     const numericValue = value === "" ? 0 : parseInt(value, 10);
@@ -49,7 +49,7 @@ export const PayBonModal = ({
     setDisplayValue(numericValue === 0 ? "" : numericValue.toLocaleString("id-ID"));
   };
 
-  // Handle Enter key to submit
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();

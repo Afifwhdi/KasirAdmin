@@ -19,33 +19,33 @@ export const ClosingTimeReminder = ({ onSyncClick }: ClosingTimeReminderProps) =
   const [reminderShownToday, setReminderShownToday] = useState(false);
 
   useEffect(() => {
-    // Check every minute
+
     const checkTime = () => {
       const now = new Date();
       const hour = now.getHours();
       const minute = now.getMinutes();
       const today = now.toDateString();
 
-      // Cek apakah sudah reminder hari ini
+
       const lastReminderDate = localStorage.getItem("lastReminderDate");
 
-      // Jam 20:15 dan belum reminder hari ini
+
       if (hour === 20 && minute === 15 && lastReminderDate !== today && !reminderShownToday) {
         setShowReminder(true);
         setReminderShownToday(true);
         localStorage.setItem("lastReminderDate", today);
       }
 
-      // Reset flag di jam 00:00 (tengah malam)
+
       if (hour === 0 && minute === 0) {
         setReminderShownToday(false);
       }
     };
 
-    // Check immediately
+
     checkTime();
 
-    // Then check every minute
+
     const interval = setInterval(checkTime, 60000); // 60 seconds
 
     return () => clearInterval(interval);

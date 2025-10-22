@@ -90,7 +90,7 @@ const TransactionsPage = () => {
 
   const queryClient = useQueryClient();
 
-  // Debounce search query
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
@@ -100,12 +100,12 @@ const TransactionsPage = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Reset page when status filter changes
+
   useEffect(() => {
     setCurrentPage(1);
   }, [statusFilter]);
 
-  // Server-side pagination with status filter
+
   const { data, isLoading, error } = useTransactions({
     page: currentPage,
     limit: ITEMS_PER_PAGE,
@@ -149,7 +149,7 @@ const TransactionsPage = () => {
     try {
       await transactionsWrapper.updateStatus(actionDialog.transactionId, newStatus);
 
-      // Invalidate queries to refresh data
+
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
 
@@ -182,7 +182,7 @@ const TransactionsPage = () => {
     total?: number
   ) => {
     if (type === "pay" && customerName !== undefined && total !== undefined) {
-      // Buka modal khusus bayar BON
+
       setPayBonModal({
         open: true,
         transactionId,
@@ -208,7 +208,7 @@ const TransactionsPage = () => {
 
       await transactionsWrapper.payBon(payBonModal.transactionId, amountPaid, changeAmount);
 
-      // Invalidate queries to refresh data
+
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
 
       toast.success(`Pembayaran BON ${payBonModal.transactionNumber} berhasil dicatat!`);

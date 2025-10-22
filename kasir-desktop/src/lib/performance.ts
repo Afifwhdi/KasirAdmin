@@ -10,7 +10,7 @@
 export function preloadAPIConnection() {
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
-  // Warm up DNS & TCP connection ke API server
+
   if (typeof window !== "undefined") {
     const link = document.createElement("link");
     link.rel = "preconnect";
@@ -25,13 +25,13 @@ export function preloadAPIConnection() {
  * Call after initial load selesai
  */
 export function prefetchLowPriorityResources() {
-  // Prefetch images, fonts, atau data yang tidak critical
-  // Contoh: prefetch next page data, images, etc
+
+
 
   if (typeof window !== "undefined" && "requestIdleCallback" in window) {
     window.requestIdleCallback(() => {
-      // Prefetch logic here
-      console.log("[Performance] Prefetching low-priority resources...");
+
+
     });
   }
 }
@@ -43,13 +43,13 @@ export function prefetchLowPriorityResources() {
 export function setupPerformanceMonitoring() {
   if (typeof window === "undefined" || import.meta.env.PROD) return;
 
-  // Measure First Contentful Paint
+
   if ("PerformanceObserver" in window) {
     try {
       const observer = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === "paint") {
-            console.log(`[Performance] ${entry.name}: ${entry.startTime}ms`);
+
           }
         }
       });
@@ -86,7 +86,7 @@ export function setupLazyImages() {
 
     lazyImages.forEach((img) => imageObserver.observe(img));
   } else {
-    // Fallback untuk browser tanpa IntersectionObserver
+
     lazyImages.forEach((img: Element) => {
       const htmlImg = img as HTMLImageElement;
       const src = htmlImg.dataset.src;
@@ -159,7 +159,7 @@ class SimpleCache {
 
     if (!item) return null;
 
-    // Check if expired
+
     if (Date.now() - item.timestamp > this.ttl) {
       this.cache.delete(key);
       return null;

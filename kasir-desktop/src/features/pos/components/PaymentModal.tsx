@@ -45,7 +45,7 @@ export const PaymentModal = ({
   const change = paymentMethod === "cash" ? Math.max(0, amountPaid - total) : 0;
   const remaining = paymentMethod === "credit" ? total : 0;
 
-  // Reset values and auto-focus when modal opens
+
   useEffect(() => {
     if (open) {
       setCustomerName("Umum");
@@ -60,7 +60,7 @@ export const PaymentModal = ({
     }
   }, [open, total]);
 
-  // Handle currency input change
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "");
     const numericValue = value === "" ? 0 : parseInt(value, 10);
@@ -68,7 +68,7 @@ export const PaymentModal = ({
     setDisplayValue(numericValue === 0 ? "" : numericValue.toLocaleString("id-ID"));
   };
 
-  // Handle keyboard input
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();

@@ -139,13 +139,13 @@ export const productService = {
     let sql = "SELECT * FROM products WHERE 1=1";
     const sqlParams: any[] = [];
     
-    // Filter by category
+
     if (category) {
       sql += " AND category = ?";
       sqlParams.push(category);
     }
     
-    // Filter by search (name or barcode)
+
     if (search) {
       sql += " AND (name LIKE ? OR barcode LIKE ?)";
       sqlParams.push(`%${search}%`, `%${search}%`);
@@ -163,13 +163,13 @@ export const productService = {
     let sql = "SELECT COUNT(*) as total FROM products WHERE 1=1";
     const sqlParams: any[] = [];
     
-    // Filter by category
+
     if (category) {
       sql += " AND category = ?";
       sqlParams.push(category);
     }
     
-    // Filter by search (name or barcode)
+
     if (search) {
       sql += " AND (name LIKE ? OR barcode LIKE ?)";
       sqlParams.push(`%${search}%`, `%${search}%`);
@@ -180,8 +180,8 @@ export const productService = {
   },
 
   async updateStock(id: number, quantityChange: number) {
-    // quantityChange is negative for decrease (e.g., -1, -5)
-    // quantityChange is positive for increase (e.g., +1, +5)
+
+
     return electronDB.run(
       "UPDATE products SET stock = stock + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
       [quantityChange, id]
@@ -189,7 +189,7 @@ export const productService = {
   },
 
   async decreaseStock(id: number, quantity: number) {
-    // Decrease stock by quantity (for transactions)
+
     return this.updateStock(id, -quantity);
   },
 
@@ -222,14 +222,14 @@ export const transactionService = {
   },
 
   async getUnsynced() {
-    // Only get unsynced transactions from today to avoid old failed syncs
+
     return electronDB.query(
       "SELECT * FROM transactions WHERE synced = 0 AND DATE(created_at) >= DATE('now') ORDER BY created_at ASC"
     );
   },
 
   async getAllUnsynced() {
-    // Get all unsynced transactions (including old ones) for manual cleanup
+
     return electronDB.query("SELECT * FROM transactions WHERE synced = 0 ORDER BY created_at ASC");
   },
 
@@ -245,14 +245,14 @@ export const transactionService = {
       customer_name,
     } = transaction;
 
-    // Check if transaction with same UUID already exists
+
     const existing = await this.getByUuid(uuid as string);
     if (existing) {
       console.warn(`⚠️  Transaction with UUID ${uuid} already exists in local database`);
       throw new Error(`Transaction with UUID ${uuid} already exists`);
     }
 
-    // Validate required fields
+
     if (!uuid || !total || typeof total !== 'number') {
       throw new Error('Missing required fields: uuid and total are required');
     }
@@ -311,7 +311,7 @@ export const transactionService = {
     );
   },
 
-  // Database maintenance methods
+
   async findDuplicates() {
     return electronDB.query(
       "SELECT uuid, COUNT(*) as count FROM transactions GROUP BY uuid HAVING count > 1"
@@ -319,7 +319,7 @@ export const transactionService = {
   },
 
   async removeDuplicates() {
-    // Keep the first occurrence, remove others
+
     const duplicates = await this.findDuplicates();
     let removedCount = 0;
 
@@ -329,7 +329,7 @@ export const transactionService = {
         [dup.uuid]
       ) as any[];
 
-      // Remove all except the first one
+
       for (let i = 1; i < transactions.length; i++) {
         await electronDB.run(
           "DELETE FROM transactions WHERE id = ?",
@@ -339,7 +339,7 @@ export const transactionService = {
       }
     }
 
-    console.log(`\ud83d\uddd1\ufe0f  Removed ${removedCount} duplicate transactions`);
+
     return removedCount;
   },
 
@@ -348,12 +348,12 @@ export const transactionService = {
   },
 
   async clearOldFailedSyncs(daysOld = 1) {
-    // Clear transactions older than X days that failed to sync
+
     const result = await electronDB.run(
       "DELETE FROM transactions WHERE synced = 0 AND created_at < datetime('now', '-' || ? || ' days')",
       [daysOld]
     );
-    console.log(`🗑️ Cleared ${result.changes || 0} old failed sync transactions`);
+
     return result.changes || 0;
   },
 

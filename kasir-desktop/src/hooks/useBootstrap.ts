@@ -49,10 +49,10 @@ export function useBootstrap() {
   return useQuery<BootstrapData>({
     queryKey: ["bootstrap"],
     queryFn: async () => {
-      // Check if we're in Electron environment
+
       const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
       
-      // Try to fetch from API first if online
+
       try {
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
         const token = localStorage.getItem("token");
@@ -76,17 +76,17 @@ export function useBootstrap() {
 
         return result.data;
       } catch (error) {
-        // If fetch fails and we're in Electron, try to load from local SQLite
+
         if (isElectron) {
-          console.log("⚠️ API fetch failed, loading from local database...");
+
           
           try {
-            console.log("🔍 Attempting to load from SQLite...");
+
             const products = await productService.getAll(1000, 0);
             const categories = await categoryService.getAll();
             
-            console.log(`✅ Loaded ${products.length} products and ${categories.length} categories from local DB`);
-            console.log("Sample product:", products[0]);
+
+
             
             const mappedData = {
               products: products.map((p: any) => ({
@@ -109,7 +109,7 @@ export function useBootstrap() {
               settings: null
             };
             
-            console.log("✅ Data mapped successfully, returning", mappedData.products.length, "products");
+
             return mappedData;
           } catch (dbError) {
             console.error("❌ Failed to load from local database:", dbError);
