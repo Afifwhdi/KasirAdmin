@@ -11,6 +11,10 @@ Thumbs.db
 *.tmp
 *.zip
 
+# --- KASIR DESKTOP (Electron App) ---
+# Only admin and api should be in VPS
+kasir-desktop/
+
 # --- NODE (React, NestJS, Dev Runner) ---
 node_modules/
 dist/
