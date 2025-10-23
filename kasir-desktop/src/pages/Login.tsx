@@ -55,7 +55,7 @@ const Login = () => {
         navigate("/");
       }, 500);
     } catch (error) {
-      console.error("Login error:", error);
+
       toast.error(
         error instanceof Error
           ? error.message

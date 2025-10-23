@@ -126,7 +126,7 @@ const TransactionHistory = () => {
       setSelectedTransaction(result.data || transaction);
       setShowDetailDialog(true);
     } catch (error) {
-      console.error("Failed to load transaction detail:", error);
+
 
       setSelectedTransaction(transaction);
       setShowDetailDialog(true);
@@ -152,7 +152,7 @@ const TransactionHistory = () => {
       setShowDetailDialog(false);
       setSelectedTransaction(null);
     } catch (error) {
-      console.error("Failed to cancel transaction:", error);
+
       toast.error("Gagal membatalkan transaksi: " + (error as Error).message, {
         icon: "❌",
         style: { background: "#ef4444", color: "white" },
@@ -181,7 +181,7 @@ const TransactionHistory = () => {
       setShowDetailDialog(false);
       setSelectedTransaction(null);
     } catch (error) {
-      console.error("Failed to refund transaction:", error);
+
       toast.error("Gagal refund transaksi: " + (error as Error).message, {
         icon: "❌",
         style: { background: "#ef4444", color: "white" },

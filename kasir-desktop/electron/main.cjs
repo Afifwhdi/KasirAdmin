@@ -29,28 +29,28 @@ function loadConfig() {
   try {
     if (fs.existsSync(CONFIG_FILE)) {
       config = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf8"));
-      console.log("Config loaded:", config);
+
     } else {
-      console.log("No config file found, first time setup needed");
+
     }
   } catch (error) {
-    console.error("Failed to load config:", error);
+
   }
 
   // Set DB path from config if exists
   if (config.dbPath) {
     DATA_DIR = config.dbPath;
     DB_PATH = path.join(DATA_DIR, "pos.db");
-    console.log("Using custom DB path:", DB_PATH);
+
   } else {
-    console.log("No DB path configured yet");
+
   }
 }
 
 function ensureDataDir() {
   if (DATA_DIR && !fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
-    console.log("Created data directory:", DATA_DIR);
+
   }
 }
 
@@ -61,7 +61,7 @@ function cleanupPreparedStatements() {
         stmt.finalize();
       }
     } catch (error) {
-      console.error("Error finalizing statement:", key, error);
+
     }
   }
   preparedStatements.clear();
@@ -72,9 +72,9 @@ function cleanupDatabase() {
   if (db) {
     try {
       db.close();
-      console.log("Database closed successfully");
+
     } catch (error) {
-      console.error("Error closing database:", error);
+
     }
     db = null;
   }
@@ -115,7 +115,7 @@ function createWindow() {
   });
 
   mainWindow.on("unresponsive", () => {
-    console.error("Window became unresponsive");
+
     dialog.showErrorBox(
       "Application Unresponsive",
       "The application is not responding. Please restart."
@@ -123,7 +123,7 @@ function createWindow() {
   });
 
   mainWindow.webContents.on("crashed", () => {
-    console.error("Renderer process crashed");
+
     const options = {
       type: "error",
       title: "Renderer Crashed",
@@ -143,7 +143,7 @@ function createWindow() {
 
 function initDatabase() {
   if (!DATA_DIR || !DB_PATH) {
-    console.log("Database path not configured, skipping initialization");
+
     return false;
   }
 
@@ -152,13 +152,12 @@ function initDatabase() {
     const dbExists = fs.existsSync(DB_PATH);
     const Database = require("better-sqlite3");
     db = new Database(DB_PATH, {
-      verbose: console.log,
       fileMustExist: false,
     });
 
     // Log jika database baru dibuat
     if (!dbExists) {
-      console.log("Creating new database at:", DB_PATH);
+
     }
 
     // Enable WAL mode untuk better performance dan concurrent access
@@ -228,10 +227,10 @@ function initDatabase() {
     // Optimize database
     db.exec("ANALYZE;");
 
-    console.log("Database initialized at:", DB_PATH);
+
     return true;
   } catch (error) {
-    console.error("Database initialization error:", error);
+
     dialog.showErrorBox(
       "Database Error",
       `Failed to initialize database: ${error.message}`
@@ -247,7 +246,7 @@ app.whenReady().then(() => {
   if (config.dbPath) {
     initDatabase();
   } else {
-    console.log("First time setup: database will be initialized after location selection");
+
   }
   
   createWindow();
@@ -300,8 +299,15 @@ app.on("before-quit", () => {
 
 // Query dengan limit untuk prevent memory overflow
 ipcMain.handle("db:query", async (event, sql, params = []) => {
+  // Lazy initialization: Try to init if config exists but DB not initialized
+  if (!db && config.dbPath) {
+    initDatabase();
+  }
+  
   if (!db) {
-    throw new Error("Database not initialized");
+    // Return empty array for queries when DB not initialized (first-time setup)
+    // This prevents error spam in console during first-time setup flow
+    return [];
   }
 
   try {
@@ -325,14 +331,20 @@ ipcMain.handle("db:query", async (event, sql, params = []) => {
 
     return stmt.all(params);
   } catch (error) {
-    console.error("Database query error:", error);
+
     throw new Error(`Database query failed: ${error.message}`);
   }
 });
 
 ipcMain.handle("db:run", async (event, sql, params = []) => {
+  // Lazy initialization: Try to init if config exists but DB not initialized
+  if (!db && config.dbPath) {
+    initDatabase();
+  }
+  
   if (!db) {
-    throw new Error("Database not initialized");
+    // Return empty result for run operations when DB not initialized
+    return { changes: 0, lastInsertRowid: 0 };
   }
 
   try {
@@ -347,14 +359,20 @@ ipcMain.handle("db:run", async (event, sql, params = []) => {
 
     return stmt.run(params);
   } catch (error) {
-    console.error("Database run error:", error);
+
     throw new Error(`Database run failed: ${error.message}`);
   }
 });
 
 ipcMain.handle("db:get", async (event, sql, params = []) => {
+  // Lazy initialization: Try to init if config exists but DB not initialized
+  if (!db && config.dbPath) {
+    initDatabase();
+  }
+  
   if (!db) {
-    throw new Error("Database not initialized");
+    // Return null for get operations when DB not initialized
+    return null;
   }
 
   try {
@@ -369,7 +387,7 @@ ipcMain.handle("db:get", async (event, sql, params = []) => {
 
     return stmt.get(params);
   } catch (error) {
-    console.error("Database get error:", error);
+
     throw new Error(`Database get failed: ${error.message}`);
   }
 });
@@ -407,7 +425,7 @@ ipcMain.handle("app:setDbPath", async (event, newPath) => {
       throw new Error("Failed to initialize database at new location");
     }
   } catch (error) {
-    console.error("Failed to set DB path:", error);
+
     return {
       success: false,
       message: `Error: ${error.message}`,
@@ -435,7 +453,7 @@ ipcMain.handle("app:hasConfig", async () => {
 // Check if database has data (products or categories)
 ipcMain.handle("app:hasDbData", async () => {
   if (!db) {
-    console.log("[hasDbData] Database not initialized");
+
     return false;
   }
   try {
@@ -445,17 +463,11 @@ ipcMain.handle("app:hasDbData", async () => {
     const categoryCount = db
       .prepare("SELECT COUNT(*) as count FROM categories")
       .get();
-    console.log(
-      "[hasDbData] Product count:",
-      productCount.count,
-      "Category count:",
-      categoryCount.count
-    );
     const hasData = productCount.count > 0 || categoryCount.count > 0;
-    console.log("[hasDbData] Result:", hasData);
+
     return hasData;
   } catch (error) {
-    console.error("[hasDbData] Error:", error);
+
     return false;
   }
 });

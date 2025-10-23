@@ -222,7 +222,7 @@ const TransactionsPage = () => {
       });
     } catch (error) {
       toast.error("Gagal memproses pembayaran BON");
-      console.error(error);
+
     }
   };
 

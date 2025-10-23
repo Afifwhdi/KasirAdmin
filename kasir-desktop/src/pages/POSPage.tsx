@@ -145,7 +145,7 @@ const POSPage = () => {
         const parsed = JSON.parse(savedHeldTransactions);
         setHeldTransactions(parsed);
       } catch (error) {
-        console.error("Failed to load held transactions:", error);
+
       }
     }
   }, []);
@@ -171,7 +171,7 @@ const POSPage = () => {
           });
         }
       } catch (error) {
-        console.error("Failed to restore cart:", error);
+
         localStorage.removeItem(AUTOSAVE_KEY);
       }
     }
@@ -296,7 +296,7 @@ const POSPage = () => {
           });
           setBarcodeQuery("");
         } catch (dbError) {
-          console.error("❌ SQLite search failed:", dbError);
+
           toast.error("Gagal mencari produk", {
             icon: <XCircle className="w-5 h-5" />,
             style: { background: "#ef4444", color: "white", border: "none" },
@@ -426,22 +426,72 @@ const POSPage = () => {
         })),
       };
       await transactionsWrapper.create(payload);
+      
       if (typeof window !== "undefined" && window.electronAPI?.isElectron) {
         try {
           const { productService } = await import("@/services/electron-db");
+          
+          // 1. Optimistic update: Update cache immediately for instant UI feedback
+          cart.forEach((item) => {
+            // Update ALL products queries (any page, any category, any search)
+            queryClient.setQueriesData(
+              { queryKey: ["products"], exact: false },
+              (oldData: any) => {
+                if (!oldData?.data) return oldData;
+                
+                // Map through products and decrease stock
+                const updatedData = oldData.data.map((product: any) => {
+                  if (product.id === item.id) {
+                    const newStock = Math.max(0, product.stock - item.quantity);
+                    return {
+                      ...product,
+                      stock: newStock
+                    };
+                  }
+                  return product;
+                });
+                
+                return {
+                  ...oldData,
+                  data: updatedData
+                };
+              }
+            );
+          });
+          
+          // 2. Update stock in database
           for (const item of cart) {
-            console.log(`📉 Decreasing stock for ${item.name} (ID: ${item.id}) by ${item.quantity}`);
             await productService.decreaseStock(item.id, item.quantity);
           }
-
+          
+          // 3. Force immediate refetch from database
+          await queryClient.refetchQueries({ 
+            queryKey: ["products"],
+            type: 'active'
+          });
+          
         } catch (stockError) {
-          console.error("❌ Failed to update stock locally:", stockError);
+          // On error, try to refetch from database anyway
+          // (transaction might have succeeded even if error occurred)
+          try {
+            await queryClient.refetchQueries({ 
+              queryKey: ["products"],
+              type: 'active'
+            });
+          } catch (refetchError) {
+            // If refetch also fails, at least show the error
+          }
+          
+          toast.error("Transaksi berhasil, tapi gagal update stok. Silakan sync data.", {
+            icon: <XCircle className="w-5 h-5" />,
+            duration: 4000,
+          });
         }
+      } else {
+        await queryClient.invalidateQueries({ queryKey: ["products"] });
       }
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["transactions"] }),
-        queryClient.invalidateQueries({ queryKey: ["products"] }),
-      ]);
+      
+      await queryClient.invalidateQueries({ queryKey: ["transactions"] });
       const now = new Date();
       const paymentTime = now.toLocaleTimeString("id-ID", {
         hour: "2-digit",
@@ -464,7 +514,7 @@ const POSPage = () => {
       setCart([]);
       localStorage.removeItem(AUTOSAVE_KEY);
     } catch (err) {
-      console.error(err);
+
       toast.error("Gagal menyimpan transaksi", {
         icon: <XCircle className="w-5 h-5" />,
         style: { background: "#ef4444", color: "white", border: "none" },
@@ -598,7 +648,7 @@ const POSPage = () => {
         });
       }
     } catch (error) {
-      console.error("Print receipt error:", error);
+
       toast.error("Gagal print struk: " + (error as Error).message, {
         icon: <XCircle className="w-5 h-5" />,
         style: { background: "#ef4444", color: "white", border: "none" },
@@ -663,7 +713,7 @@ const POSPage = () => {
         toast.success("Struk berhasil dicetak");
       }
     } catch (error) {
-      console.error("Print receipt error:", error);
+
       throw error;
     }
   };

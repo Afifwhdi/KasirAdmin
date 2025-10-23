@@ -33,7 +33,6 @@ export const FirstTimeSetupDialog = ({ open, onComplete }: FirstTimeSetupDialogP
         setDbPath(result.folderPath);
       }
     } catch (error) {
-      console.error("Failed to select folder:", error);
       toast.error("Gagal memilih folder");
     } finally {
       setIsSelecting(false);

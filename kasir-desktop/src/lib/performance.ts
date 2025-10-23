@@ -55,7 +55,6 @@ export function setupPerformanceMonitoring() {
       });
       observer.observe({ entryTypes: ["paint"] });
     } catch (error) {
-      console.warn("[Performance] Observer not supported:", error);
     }
   }
 }

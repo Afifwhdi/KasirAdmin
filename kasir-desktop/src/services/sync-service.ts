@@ -122,11 +122,9 @@ export const syncService = {
 
             if (existing) {
 
-              console.log(`📝 Updating product: ${product.name} (UUID: ${productUuid}, Stock: ${product.stock})`);
               await productService.update(existing.id, productData);
             } else {
 
-              console.log(`➕ Creating product: ${product.name} (UUID: ${productUuid}, Stock: ${product.stock})`);
               await productService.create({
                 uuid: productUuid,
                 ...productData,
@@ -135,7 +133,6 @@ export const syncService = {
 
             synced.push(product);
           } catch (error) {
-            console.error("❌ Failed to sync product:", product.id, error);
             failed.push({ id: product.id, error: error.message });
           }
         }
@@ -147,7 +144,6 @@ export const syncService = {
 
 
         if (!response.meta?.totalPages && page >= 10) {
-          console.warn("No totalPages metadata, stopping after 10 pages");
           break;
         }
 
@@ -155,11 +151,9 @@ export const syncService = {
       }
 
 
-      console.log(`📦 Total products in database: ${await productService.count()}`);
       
       return { synced, failed };
     } catch (error) {
-      console.error("❌ Sync products error:", error);
       throw new Error(`Sync failed: ${error.message}`);
     }
   },
@@ -205,25 +199,23 @@ export const syncService = {
           });
         }
         try {
-          await categoryService.create({
-            uuid: category.uuid || crypto.randomUUID(),
-            name: category.name,
-          });
+          const existing = await categoryService.getByName(category.name);
+          
+          if (!existing) {
+            await categoryService.create({
+              uuid: category.uuid || crypto.randomUUID(),
+              name: category.name,
+            });
+          }
+          
           synced.push(category);
         } catch (error) {
-
-          if (error.message && error.message.includes("UNIQUE")) {
-            synced.push(category);
-          } else {
-            console.error("Failed to sync category:", category.id, error);
-            failed.push(category);
-          }
+          failed.push(category);
         }
       }
 
       return { synced, failed };
     } catch (error) {
-      console.error("Sync categories error:", error);
       throw error;
     }
   },
@@ -293,13 +285,8 @@ export const syncService = {
 
           }
         } catch (error) {
-          console.error("Failed to insert transaction:", transaction, error);
 
           if (error.message && error.message.includes("UNIQUE")) {
-            console.log(
-              "Transaction duplicate (UNIQUE constraint):",
-              transaction.transaction_number
-            );
           } else {
             failed.push({ transaction, error: (error as Error).message });
           }
@@ -308,7 +295,6 @@ export const syncService = {
 
       return { synced, failed };
     } catch (error) {
-      console.error("Sync transactions error:", error);
       throw error;
     }
   },
@@ -333,7 +319,6 @@ export const syncService = {
       const catResult = await this.syncCategoriesFromServer(onProgress);
       results.categories = catResult;
     } catch (error) {
-      console.error("Failed to sync categories:", error);
     }
 
 
@@ -341,7 +326,6 @@ export const syncService = {
       const prodResult = await this.syncProductsFromServer(onProgress);
       results.products = prodResult;
     } catch (error) {
-      console.error("Failed to sync products:", error);
     }
 
 
@@ -350,7 +334,6 @@ export const syncService = {
         const txResult = await this.syncTransactionsFromServer(onProgress);
         results.transactions = txResult;
       } catch (error) {
-        console.error("Failed to sync transactions:", error);
       }
     }
 

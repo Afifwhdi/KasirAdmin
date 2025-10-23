@@ -3,6 +3,12 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
+
+// React Router v7 Future Flags - Ready for future upgrade
+const routerFutureConfig = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+};
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Suspense, lazy, useEffect } from "react";
 import { isElectron } from "@/lib/utils";
@@ -44,7 +50,6 @@ const App = () => {
 
           await transactionService.clearOldFailedSyncs(1);
         } catch (error) {
-          console.error('Failed to cleanup old sync transactions:', error);
         }
       }
     };
@@ -58,7 +63,7 @@ const App = () => {
         <Toaster />
         <Sonner position="top-right" />
 
-        <HashRouter>
+        <HashRouter future={routerFutureConfig}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Login Route */}

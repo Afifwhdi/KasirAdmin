@@ -38,7 +38,6 @@ export const DatabaseSettingsDialog = ({
         setNewPath(result.folderPath);
       }
     } catch (error) {
-      console.error("Failed to select folder:", error);
       toast.error("Gagal memilih folder");
     } finally {
       setIsSelecting(false);
@@ -75,7 +74,6 @@ export const DatabaseSettingsDialog = ({
         }
       }, 1000);
     } catch (error) {
-      console.error("Failed to set DB path:", error);
       toast.error("Gagal mengubah lokasi database: " + (error as Error).message);
     }
   };

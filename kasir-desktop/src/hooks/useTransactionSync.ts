@@ -168,7 +168,6 @@ export const useTransactionSync = () => {
     try {
       return await transactionService.getSyncStats();
     } catch (error) {
-      console.error('Failed to get sync stats:', error);
       return {
         total_transactions: 0,
         unsynced_count: 0,

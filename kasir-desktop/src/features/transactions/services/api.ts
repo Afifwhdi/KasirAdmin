@@ -56,11 +56,6 @@ export const transactionsApi = {
   },
 
   async create(data: CreateTransactionData) {
-    console.log("[TransactionsAPI] Creating transaction:", {
-      transaction_number: data.transaction_number,
-      total: data.total,
-      items_count: data.items.length,
-    });
 
     const res = await fetch(`${API_CONFIG.BASE_URL}${API_ENDPOINTS.TRANSACTIONS}`, {
       method: "POST",
@@ -74,25 +69,11 @@ export const transactionsApi = {
       
       try {
         const errorData = await res.json();
-        errorDetail = JSON.stringify(errorData, null, 2); // Pretty print
+        errorDetail = JSON.stringify(errorData, null, 2);
         errorMessage = errorData.message || errorData.error || "Unknown error";
-        
-
-        console.error("❌❌❌ [TransactionsAPI] SYNC ERROR DETAIL ❌❌❌");
-        console.error("Status Code:", res.status);
-        console.error("Status Text:", res.statusText);
-        console.error("Error Message:", errorMessage);
-        console.error("Full Error Response:", errorData);
-        console.error("Request Payload:", data);
-        console.error("❌❌❌ END OF ERROR DETAIL ❌❌❌");
       } catch {
         errorDetail = await res.text();
         errorMessage = errorDetail;
-        console.error("❌❌❌ [TransactionsAPI] SERVER ERROR (TEXT) ❌❌❌");
-        console.error("Status Code:", res.status);
-        console.error("Error Text:", errorDetail);
-        console.error("Request Payload:", data);
-        console.error("❌❌❌ END OF ERROR ❌❌❌");
       }
       
       const error: any = new Error(`HTTP ${res.status}: ${errorMessage}`);

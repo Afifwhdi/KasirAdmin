@@ -68,7 +68,6 @@ class AuthService {
 
       throw new Error(result.message || "Login failed");
     } catch (error) {
-      console.error("Login error:", error);
       throw error;
     }
   }

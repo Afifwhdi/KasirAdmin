@@ -16,11 +16,11 @@ class MemoryMonitor {
 
   start() {
     if (this.isMonitoring) {
-      console.warn("[Memory Monitor] Already monitoring");
+
       return;
     }
 
-    console.log("[Memory Monitor] Started");
+
     this.isMonitoring = true;
 
     this.intervalId = setInterval(() => {
@@ -28,13 +28,13 @@ class MemoryMonitor {
       const heapUsedMB = Math.round(memoryInfo.heapUsed / 1024 / 1024);
       const rssMB = Math.round(memoryInfo.rss / 1024 / 1024);
 
-      console.log(`[Memory Monitor] Heap: ${heapUsedMB}MB | RSS: ${rssMB}MB`);
+
 
       if (heapUsedMB > MEMORY_THRESHOLD_MB) {
-        console.warn(`[Memory Monitor] HIGH MEMORY USAGE: ${heapUsedMB}MB`);
+
 
         if (global.gc) {
-          console.log("[Memory Monitor] Triggering manual GC...");
+
           global.gc();
         }
       }
@@ -47,7 +47,7 @@ class MemoryMonitor {
       this.intervalId = null;
     }
     this.isMonitoring = false;
-    console.log("[Memory Monitor] Stopped");
+
   }
 
   getMemoryInfo() {

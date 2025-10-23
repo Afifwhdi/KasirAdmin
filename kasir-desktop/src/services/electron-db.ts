@@ -139,13 +139,12 @@ export const productService = {
     let sql = "SELECT * FROM products WHERE 1=1";
     const sqlParams: any[] = [];
     
-
-    if (category) {
+    // If no category filter or category is empty, show all products
+    if (category && category !== '') {
       sql += " AND category = ?";
       sqlParams.push(category);
     }
     
-
     if (search) {
       sql += " AND (name LIKE ? OR barcode LIKE ?)";
       sqlParams.push(`%${search}%`, `%${search}%`);
@@ -163,13 +162,11 @@ export const productService = {
     let sql = "SELECT COUNT(*) as total FROM products WHERE 1=1";
     const sqlParams: any[] = [];
     
-
-    if (category) {
+    if (category && category !== '') {
       sql += " AND category = ?";
       sqlParams.push(category);
     }
     
-
     if (search) {
       sql += " AND (name LIKE ? OR barcode LIKE ?)";
       sqlParams.push(`%${search}%`, `%${search}%`);
@@ -248,7 +245,6 @@ export const transactionService = {
 
     const existing = await this.getByUuid(uuid as string);
     if (existing) {
-      console.warn(`⚠️  Transaction with UUID ${uuid} already exists in local database`);
       throw new Error(`Transaction with UUID ${uuid} already exists`);
     }
 
@@ -274,7 +270,6 @@ export const transactionService = {
         ]
       );
     } catch (error) {
-      console.error('Failed to create transaction in local database:', error);
       throw new Error(`Failed to create transaction: ${error.message || error}`);
     }
   },
@@ -377,9 +372,13 @@ export const categoryService = {
     return electronDB.query("SELECT * FROM categories ORDER BY name ASC");
   },
 
+  async getByName(name: string) {
+    return electronDB.get("SELECT * FROM categories WHERE name = ?", [name]);
+  },
+
   async create(category: Record<string, unknown>) {
     const { uuid, name } = category;
-    return electronDB.run("INSERT INTO categories (uuid, name) VALUES (?, ?)", [uuid, name]);
+    return electronDB.run("INSERT OR IGNORE INTO categories (uuid, name) VALUES (?, ?)", [uuid, name]);
   },
 
   async delete(id: number) {

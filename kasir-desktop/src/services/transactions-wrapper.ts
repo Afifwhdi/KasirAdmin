@@ -7,13 +7,7 @@ import {
 } from "@/features/transactions/services/api";
 
 
-const isDev = import.meta.env.MODE === 'development';
-const log = (...args: any[]) => {
-  if (isDev) console.log(...args);
-};
-const logError = (...args: any[]) => {
-  if (isDev) console.error(...args);
-};
+
 
 export const transactionsWrapper = {
   async getAll(params?: TransactionsPaginationParams): Promise<TransactionsPaginationResponse> {
@@ -124,7 +118,7 @@ export const transactionsWrapper = {
       throw new Error("Sync only available in Electron mode");
     }
 
-    log("🚀 Starting sync to server...");
+
     const unsynced = await electronTransactionService.getUnsynced();
     const synced = [];
     const failed = [];
@@ -132,15 +126,15 @@ export const transactionsWrapper = {
     const created = [];
 
     if (unsynced.length === 0) {
-      log("✅ No unsynced transactions found");
+
       return { synced, failed, updated, created };
     }
 
-    log(`📋 Found ${unsynced.length} unsynced transactions`);
+
 
     for (const [index, tx] of unsynced.entries()) {
       try {
-        log(`📤 Syncing ${index + 1}/${unsynced.length}: ${tx.uuid}`);
+
         
         const items = typeof tx.items === "string" ? JSON.parse(tx.items) : tx.items;
         let validatedTotal = tx.total;
@@ -149,7 +143,7 @@ export const transactionsWrapper = {
         
         if (!validatedUuid) {
           validatedUuid = `TRX-${Date.now()}-${tx.id}`;
-          log(`   🔧 Generated UUID for transaction ID ${tx.id}: ${validatedUuid}`);
+
           await electronDB.run('UPDATE transactions SET uuid = ? WHERE id = ?', [validatedUuid, tx.id]);
         }
         
@@ -158,10 +152,10 @@ export const transactionsWrapper = {
             validatedTotal = validatedItems.reduce((sum: number, item: any) => {
               return sum + (item.subtotal || (item.price * item.quantity) || 0);
             }, 0);
-            log(`   🔧 Calculated total for transaction ID ${tx.id}: ${validatedTotal}`);
+
           } else {
             validatedTotal = tx.payment_amount || 1000;
-            log(`   🔧 Set default total for transaction ID ${tx.id}: ${validatedTotal}`);
+
           }
         }
         
@@ -173,7 +167,7 @@ export const transactionsWrapper = {
             price: validatedTotal,
             subtotal: validatedTotal
           }];
-          log(`   🔧 Generated default items for transaction ID ${tx.id}`);
+
         }
         
         if (!validatedUuid || !validatedTotal || !validatedItems || validatedItems.length === 0) {
@@ -210,13 +204,7 @@ export const transactionsWrapper = {
           items: processedItems,
         };
 
-        log(`   📦 Payload for ${tx.uuid}:`, {
-          transaction_number: payload.transaction_number,
-          status: payload.status,
-          total: payload.total,
-          cash_received: payload.cash_received,
-          items_count: payload.items.length
-        });
+
 
         let result;
         try {
@@ -224,25 +212,20 @@ export const transactionsWrapper = {
         } catch (apiError) {
 
           const err = apiError as any;
-          logError(`   ❌ API Error for ${tx.uuid}:`, {
-            message: err.message,
-            status: err.status,
-            response: err.response,
-            payload: payload
-          });
+
           throw new Error(`API call failed: ${err.message || 'Unknown error'}`);
         }
         
         // CRITICAL: Validate server response before marking as synced
         if (!result || result.status !== 'success') {
-          logError(`   ❌ Server response not success for ${tx.uuid}:`, result);
+
           throw new Error(`Server response failed: ${result?.message || 'Unknown error'}`);
         }
         
         const isUpdated = result.data?.updated === true;
         const actionType = isUpdated ? 'updated' : 'created';
         
-        log(`   ✅ Transaction ${tx.uuid} ${actionType} successfully`);
+
         
         // CRITICAL: Mark as synced ONLY after confirmed success
         await electronTransactionService.markSynced(tx.id);
@@ -256,7 +239,7 @@ export const transactionsWrapper = {
         
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        logError(`   ❌ Failed to sync transaction ${tx.uuid}:`, errorMessage);
+
         
         failed.push({
           ...tx,
@@ -274,7 +257,7 @@ export const transactionsWrapper = {
       failed: failed.length,
     };
 
-    log("📊 Sync Summary:", summary);
+
     
     return { 
       synced, 

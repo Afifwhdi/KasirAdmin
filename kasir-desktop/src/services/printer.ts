@@ -160,7 +160,6 @@ export class PrinterService {
 
       device.gatt?.disconnect();
     } catch (error) {
-      console.error("Bluetooth print error:", error);
       throw new Error("Gagal print via Bluetooth: " + (error as Error).message);
     }
   }
@@ -186,7 +185,6 @@ export class PrinterService {
       printWindow.print();
       printWindow.close();
     } catch (error) {
-      console.error("Local print error:", error);
       throw new Error("Gagal print via local printer: " + (error as Error).message);
     }
   }

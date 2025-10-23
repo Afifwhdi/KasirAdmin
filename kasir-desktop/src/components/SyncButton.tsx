@@ -65,7 +65,6 @@ export const SyncButton = ({
       const newStats = await getSyncStats();
       setStats(newStats);
     } catch (error) {
-      console.error("Cleanup failed:", error);
     }
   };
 

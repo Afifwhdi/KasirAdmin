@@ -68,7 +68,7 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         .then((path) => {
           setDbPath(path);
         })
-        .catch(console.error);
+        .catch(() => {});
     }
   }, []);
 
@@ -98,12 +98,9 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         clearTimeout(timeoutId);
 
         const isConnected = response.ok;
-        console.log(`[Header] Server ping: ${isConnected ? "ONLINE ✓" : "OFFLINE ✗"} (status: ${response.status})`);
         setIsOnline(isConnected);
         return isConnected;
       } catch (error) {
-        const err = error as Error;
-        console.log(`[Header] Server ping: OFFLINE ✗ (${err.name}: ${err.message})`);
         setIsOnline(false);
         return false;
       }
@@ -207,7 +204,6 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
 
           queryClient.invalidateQueries({ queryKey: ["products"] });
         } catch (syncError) {
-          console.error("❌ Failed to sync products after upload:", syncError);
 
         }
       }
@@ -220,7 +216,6 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         });
       }
     } catch (error) {
-      console.error("Sync error:", error);
       toast.error("Gagal sync ke server", {
         icon: "❌",
         duration: 2000,
@@ -305,7 +300,6 @@ export const Header = ({ onDataDownloaded }: HeaderProps = {}) => {
         }
       }, 2000);
     } catch (error) {
-      console.error("Sync from server error:", error);
 
 
       setSyncProgress({

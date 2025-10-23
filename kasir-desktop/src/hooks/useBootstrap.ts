@@ -46,137 +46,72 @@ interface BootstrapResponse {
 }
 
 export function useBootstrap() {
+  const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
+  
   return useQuery<BootstrapData>({
     queryKey: ["bootstrap"],
     queryFn: async () => {
+      if (isElectron) {
+        try {
+          const products = await productService.getAll(1000, 0);
+          const categories = await categoryService.getAll();
 
-      const isElectron = typeof window !== "undefined" && window.electronAPI?.isElectron;
-      
-
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-        const token = localStorage.getItem("token");
-
-        const response = await fetch(`${apiUrl}/bootstrap`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch bootstrap data");
+          return {
+            products: products.map((p: any) => ({
+              id: p.id,
+              uuid: p.uuid,
+              name: p.name,
+              price: p.price,
+              stock: p.stock,
+              barcode: p.barcode,
+              is_plu_enabled: p.is_plu_enabled || false,
+              category: p.category ? {
+                id: p.category_id || null,
+                name: p.category
+              } : null
+            })),
+            categories: categories.map((c: any) => ({
+              id: c.id,
+              name: c.name
+            })),
+            settings: null
+          };
+        } catch (dbError) {
+          console.error("❌ Bootstrap SQLite error:", dbError);
+          return {
+            products: [],
+            categories: [],
+            settings: null
+          };
         }
-
-        const result: BootstrapResponse = await response.json();
-
-        if (result.status !== "success") {
-          throw new Error(result.message || "Bootstrap failed");
-        }
-
-        return result.data;
-      } catch (error) {
-
-        if (isElectron) {
-
-          
-          try {
-
-            const products = await productService.getAll(1000, 0);
-            const categories = await categoryService.getAll();
-            
-
-
-            
-            const mappedData = {
-              products: products.map((p: any) => ({
-                id: p.id,
-                uuid: p.uuid, // Include server's UUID for sync compatibility
-                name: p.name,
-                price: p.price,
-                stock: p.stock,
-                barcode: p.barcode,
-                is_plu_enabled: p.is_plu_enabled || false,
-                category: p.category ? {
-                  id: p.category_id || null,
-                  name: p.category
-                } : null
-              })),
-              categories: categories.map((c: any) => ({
-                id: c.id,
-                name: c.name
-              })),
-              settings: null
-            };
-            
-
-            return mappedData;
-          } catch (dbError) {
-            console.error("❌ Failed to load from local database:", dbError);
-            console.error("Error details:", dbError.message, dbError.stack);
-            throw new Error("Failed to load data: offline and no local data available");
-          }
-        }
-        
-        throw error;
       }
+
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`${apiUrl}/bootstrap`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch bootstrap data");
+      }
+
+      const result: BootstrapResponse = await response.json();
+
+      if (result.status !== "success") {
+        throw new Error(result.message || "Bootstrap failed");
+      }
+
+      return result.data;
     },
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
-    retry: 2,
+    retry: false,
     refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
-  });
-}
-
-export function useProducts() {
-  return useQuery<Product[]>({
-    queryKey: ["products"],
-    queryFn: async () => {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`${apiUrl}/products`, {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch products");
-      }
-
-      const result = await response.json();
-      return result.data;
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
-}
-
-export function useCategories() {
-  return useQuery<Category[]>({
-    queryKey: ["categories"],
-    queryFn: async () => {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
-      const token = localStorage.getItem("token");
-
-      const response = await fetch(`${apiUrl}/categories`, {
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch categories");
-      }
-
-      const result = await response.json();
-      return result.data;
-    },
-    staleTime: 10 * 60 * 1000,
-    gcTime: 20 * 60 * 1000,
+    refetchOnReconnect: false,
   });
 }
