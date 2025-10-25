@@ -7,25 +7,26 @@ import * as bcrypt from 'bcrypt';
 export class AuthService {
   constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
-  async login(email: string, password: string) {
+  async login(username: string, password: string) {
     try {
       interface UserRow {
         id: number;
         name: string;
         email: string;
+        username: string;
         password: string;
         role: string;
       }
 
       const users = await this.dataSource.query<UserRow[]>(
-        'SELECT id, name, email, password, role FROM users WHERE email = $1 LIMIT 1',
-        [email],
+        'SELECT id, name, email, username, password, role FROM users WHERE username = $1 LIMIT 1',
+        [username],
       );
 
       const user = users[0];
 
       if (!user) {
-        throw new UnauthorizedException('Email atau password salah');
+        throw new UnauthorizedException('Username atau password salah');
       }
 
       const isPasswordValid = await this.verifyPassword(
@@ -34,7 +35,7 @@ export class AuthService {
       );
 
       if (!isPasswordValid) {
-        throw new UnauthorizedException('Email atau password salah');
+        throw new UnauthorizedException('Username atau password salah');
       }
 
       // Return user data (without password)
@@ -45,6 +46,7 @@ export class AuthService {
           id: user.id,
           name: user.name,
           email: user.email,
+          username: user.username,
           role: user.role,
         },
       };

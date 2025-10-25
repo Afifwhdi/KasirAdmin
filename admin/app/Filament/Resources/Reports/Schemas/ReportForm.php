@@ -27,7 +27,7 @@ class ReportForm
                             ->maxDate(now())
                             ->default(now()),
                     ])
-                    ->columns(2),
+                    ->columnSpanFull(),
             ]);
     }
 }

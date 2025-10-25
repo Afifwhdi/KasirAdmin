@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Actions\Action;
 
 class UsersTable
 {
@@ -23,6 +24,10 @@ class UsersTable
                     ->label('Email')
                     ->searchable(),
 
+                TextColumn::make('username')
+                    ->label('Username')
+                    ->searchable(),
+
                 BadgeColumn::make('role')
                     ->label('Peran')
                     ->colors([
@@ -33,14 +38,12 @@ class UsersTable
                 TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
 
                 TextColumn::make('updated_at')
                     ->label('Diubah')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
                 //

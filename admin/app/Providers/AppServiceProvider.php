@@ -11,6 +11,9 @@ use App\Observers\ProductObserver;
 use App\Observers\CategoryObserver;
 use Illuminate\Support\ServiceProvider;
 use Filament\Support\Facades\FilamentAsset;
+use Illuminate\Support\Facades\Auth;
+use App\Auth\UsernameUserProvider;
+use App\Models\User;
 
 use App\Http\Responses\LoginResponse as CustomLoginResponse;
 use Filament\Http\Responses\Auth\Contracts\LoginResponse as LoginResponseContract;
@@ -42,5 +45,10 @@ class AppServiceProvider extends ServiceProvider
         FilamentAsset::register([
             Js::make('printer-thermal', asset('js/printer-thermal.js'))
         ]);
+
+        // Register custom user provider untuk login dengan username
+        Auth::provider('username', function ($app, array $config) {
+            return new UsernameUserProvider($app['hash'], $config['model']);
+        });
     }
 }
