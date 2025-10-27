@@ -6,20 +6,21 @@ use App\Filament\Resources\NotificationLogs\Pages\ListNotificationLogs;
 use App\Filament\Resources\NotificationLogs\Schemas\NotificationLogForm;
 use App\Filament\Resources\NotificationLogs\Tables\NotificationLogsTable;
 use App\Models\NotificationLog;
-use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use BackedEnum;
+use Filament\Notifications\Notification;
 use UnitEnum;
 
 class NotificationLogResource extends Resource
 {
     protected static ?string $model = NotificationLog::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static string |BackedEnum| null $navigationIcon = Heroicon::OutlinedDocumentText;
 
-    protected static UnitEnum|string|null $navigationGroup = 'Pengaturan';
+    protected static string |UnitEnum| null $navigationGroup = 'Pengaturan';
 
     protected static ?string $navigationLabel = 'Log Notifikasi';
 
@@ -31,6 +32,11 @@ class NotificationLogResource extends Resource
     public static function canCreate(): bool
     {
         return false;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
     }
 
     public static function canEdit($record): bool

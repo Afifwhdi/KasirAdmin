@@ -16,11 +16,12 @@ class PaymentMethodResource extends Resource
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-newspaper';
 
+    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
+
     protected static ?int $navigationSort = 5;
 
     protected static ?string $navigationLabel = 'Metode Pembayaran';
 
-    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
 
     public static function getNavigationBadge(): ?string
     {
@@ -48,8 +49,6 @@ class PaymentMethodResource extends Resource
     {
         return [
             'index' => Pages\ListPaymentMethods::route('/'),
-            'create' => Pages\CreatePaymentMethod::route('/create'),
-            'edit' => Pages\EditPaymentMethod::route('/{record}/edit'),
         ];
     }
 }

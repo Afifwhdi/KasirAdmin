@@ -22,71 +22,62 @@ class TransactionForm
     {
         return $schema
             ->schema([
+
                 Section::make('Produk dipesan')
                     ->schema([
                         self::getItemsRepeater(),
-                    ])
-                    ->description('Pastikan cek stok produk sebelum simpan'),
-
-                Group::make()->schema([
-                    Section::make()->schema([
                         TextInput::make('total')
                             ->required()
                             ->readOnly()
                             ->numeric(),
                     ])
-                ]),
+                    ->description('Pastikan cek stok produk sebelum simpan')
+                    ->columnSpanFull(),
 
-                Group::make()->schema([
-                    Section::make('Informasi Customer')->schema([
-                        TextInput::make('name')
-                            ->label('Nama Customer')
-                            ->placeholder('Kosongkan untuk customer umum')
-                            ->maxLength(255),
-                    ])
-                ]),
+                Section::make('Informasi Pembayaran')->schema([
 
-                Group::make()->schema([
-                    Section::make('Pembayaran')->schema([
-                        Select::make('payment_method_id')
-                            ->relationship('paymentMethod', 'name')
-                            ->required()
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                $paymentMethod = PaymentMethod::find($state);
-                                $set('is_cash', $paymentMethod?->is_cash ?? false);
+                    TextInput::make('name')
+                        ->label('Nama Customer')
+                        ->placeholder('Kosongkan untuk customer umum')
+                        ->maxLength(255),
 
-                                if (!$paymentMethod?->is_cash) {
-                                    $set('change_amount', 0);
-                                    $set('cash_received', $get('total'));
-                                }
-                            })
-                            ->afterStateHydrated(function (Set $set, Get $get, $state) {
-                                $paymentMethod = PaymentMethod::find($state);
+                    Select::make('payment_method_id')
+                        ->relationship('paymentMethod', 'name')
+                        ->required()
+                        ->reactive()
+                        ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                            $paymentMethod = PaymentMethod::find($state);
+                            $set('is_cash', $paymentMethod?->is_cash ?? false);
 
-                                if (!$paymentMethod?->is_cash) {
-                                    $set('cash_received', $get('total'));
-                                    $set('change_amount', 0);
-                                }
+                            if (!$paymentMethod?->is_cash) {
+                                $set('change_amount', 0);
+                                $set('cash_received', $get('total'));
+                            }
+                        })
+                        ->afterStateHydrated(function (Set $set, Get $get, $state) {
+                            $paymentMethod = PaymentMethod::find($state);
 
-                                $set('is_cash', $paymentMethod?->is_cash ?? false);
-                            }),
-                        Hidden::make('is_cash')->dehydrated(),
-                        TextInput::make('cash_received')
-                            ->numeric()
-                            ->reactive()
-                            ->label('Nominal Bayar')
-                            ->readOnly(fn(Get $get) => $get('is_cash') == false)
-                            ->afterStateUpdated(fn(Set $set, Get $get, $state)
-                            => self::updateExchangePaid($get, $set)),
-                        TextInput::make('change_amount')
-                            ->numeric()
-                            ->label('Kembalian')
-                            ->readOnly(),
-                    ])
-                ]),
+                            if (!$paymentMethod?->is_cash) {
+                                $set('cash_received', $get('total'));
+                                $set('change_amount', 0);
+                            }
 
-                Section::make('Status Transaksi')->schema([
+                            $set('is_cash', $paymentMethod?->is_cash ?? false);
+                        }),
+
+                    Hidden::make('is_cash')->dehydrated(),
+                    TextInput::make('cash_received')
+                        ->numeric()
+                        ->reactive()
+                        ->label('Nominal Bayar')
+                        ->readOnly(fn(Get $get) => $get('is_cash') == false)
+                        ->afterStateUpdated(fn(Set $set, Get $get, $state)
+                        => self::updateExchangePaid($get, $set)),
+                    TextInput::make('change_amount')
+                        ->numeric()
+                        ->label('Kembalian')
+                        ->readOnly(),
+
                     Select::make('status')
                         ->label('Status')
                         ->options([
@@ -99,7 +90,9 @@ class TransactionForm
                         ->required()
                         ->native(false)
                         ->searchable(),
-                ]),
+                ])
+                    ->description('Pastikan nama dan informasi harga jangan sampai salah')
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -126,6 +119,8 @@ class TransactionForm
                     })
                     ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                     ->columnSpan(['md' => 5]),
+
+
 
                 TextInput::make('quantity')
                     ->required()

@@ -58,7 +58,7 @@ class NotificationLogsTable
                 //
             ])
             ->toolbarActions([
-                DeleteBulkAction::make(),
+                // DeleteBulkAction::make(),
             ])
 
             ->defaultSort('sent_at', 'desc');
