@@ -10,24 +10,17 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use BackedEnum;
-use Filament\Notifications\Notification;
-use UnitEnum;
 
 class NotificationLogResource extends Resource
 {
     protected static ?string $model = NotificationLog::class;
 
-    protected static string |BackedEnum| null $navigationIcon = Heroicon::OutlinedDocumentText;
-
-    protected static string |UnitEnum| null $navigationGroup = 'Pengaturan';
-
+    protected static string | \BackedEnum| null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static string | \UnitEnum | null $navigationGroup = 'Pengaturan Toko';
     protected static ?string $navigationLabel = 'Log Notifikasi';
-
     protected static ?string $modelLabel = 'Log Notifikasi';
-
     protected static ?string $pluralModelLabel = 'Log Notifikasi';
-
+    protected static ?int $navigationSort = 99;
 
     public static function canCreate(): bool
     {

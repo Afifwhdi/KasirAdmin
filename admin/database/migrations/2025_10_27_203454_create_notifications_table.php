@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cash_flows', function (Blueprint $table) {
-            $table->id();
-            $table->date('date');
-            $table->enum('type', ['income', 'expense']);
-            $table->string('source');
-            $table->integer('amount');
-            $table->text('notes')->nullable();
+        Schema::create('notifications', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->json('data');
+            $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cash_flows');
+        Schema::dropIfExists('notifications');
     }
 };

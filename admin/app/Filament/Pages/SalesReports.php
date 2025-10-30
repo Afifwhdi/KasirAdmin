@@ -23,9 +23,9 @@ class SalesReports extends Page implements HasForms
     use HasFiltersForm;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-chart-bar';
+    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
     protected static ?string $navigationLabel = 'Laporan Analytics';
     protected static ?string $title = 'Laporan Penjualan & Analytics';
-    protected static string | \UnitEnum | null $navigationGroup = 'Menejemen keuangan';
     protected static ?int $navigationSort = 7;
 
     public ?array $data = [];
@@ -41,7 +41,7 @@ class SalesReports extends Page implements HasForms
             'endDate' => $this->endDate,
         ]);
     }
-    
+
     public function getView(): string
     {
         return 'filament.pages.sales-reports';
@@ -102,12 +102,12 @@ class SalesReports extends Page implements HasForms
                 ->action(function () {
                     $start = Carbon::parse($this->filters['startDate'] ?? Carbon::today());
                     $end = Carbon::parse($this->filters['endDate'] ?? Carbon::today());
-                    
+
                     Notification::make()
                         ->title('Laporan sedang diunduh')
                         ->success()
                         ->send();
-                    
+
                     return Excel::download(
                         new SalesReportExport($start, $end),
                         'laporan-penjualan-' . $start->format('Ymd') . '-' . $end->format('Ymd') . '.xlsx'
@@ -121,12 +121,12 @@ class SalesReports extends Page implements HasForms
                 ->action(function () {
                     $start = Carbon::parse($this->filters['startDate'] ?? Carbon::today());
                     $end = Carbon::parse($this->filters['endDate'] ?? Carbon::today());
-                    
+
                     Notification::make()
                         ->title('Laporan sedang diunduh')
                         ->success()
                         ->send();
-                    
+
                     return Excel::download(
                         new ProductReportExport($start, $end),
                         'laporan-produk-' . $start->format('Ymd') . '-' . $end->format('Ymd') . '.xlsx'

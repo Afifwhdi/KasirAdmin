@@ -31,12 +31,6 @@ return new class extends Migration
             }
         });
 
-        Schema::table('categories', function (Blueprint $table) {
-            if (!Schema::hasColumn('categories', 'version')) {
-                $table->unsignedBigInteger('version')->default(1)->after('updated_at');
-            }
-        });
-
         if (!Schema::hasTable('stock_movements')) {
             Schema::create('stock_movements', function (Blueprint $table) {
                 $table->id();
@@ -52,17 +46,6 @@ return new class extends Migration
                     ->onDelete('cascade');
 
                 $table->index('product_id');
-            });
-        }
-
-        if (!Schema::hasTable('sync_logs')) {
-            Schema::create('sync_logs', function (Blueprint $table) {
-                $table->id();
-                $table->char('uuid', 36);
-                $table->enum('type', ['download', 'upload']);
-                $table->enum('status', ['success', 'failed']);
-                $table->text('message')->nullable();
-                $table->timestamp('created_at')->useCurrent();
             });
         }
     }
@@ -87,13 +70,6 @@ return new class extends Migration
             }
         });
 
-        Schema::table('categories', function (Blueprint $table) {
-            if (Schema::hasColumn('categories', 'version')) {
-                $table->dropColumn('version');
-            }
-        });
-
         Schema::dropIfExists('stock_movements');
-        Schema::dropIfExists('sync_logs');
     }
 };

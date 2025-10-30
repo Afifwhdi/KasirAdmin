@@ -17,11 +17,8 @@ class CategoryResource extends Resource
     protected static ?string $model = Category::class;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-tag';
-
     protected static string| \UnitEnum|null $navigationGroup = 'Menejemen Produk';
-
     protected static ?string $navigationLabel = 'Kategori';
-
     protected static ?int $navigationSort = 1;
 
     public static function getNavigationBadge(): ?string

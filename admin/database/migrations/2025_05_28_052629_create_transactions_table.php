@@ -14,15 +14,12 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('payment_method_id')->constrained();
-            $table->string('transaction_number');
+            $table->string('transaction_number')->unique();
             $table->string('name')->nullable();
-            $table->string('email')->nullable();
-            $table->string('phone')->nullable();
-            $table->text('address')->nullable();
-            $table->text('notes')->nullable();
             $table->integer('total');
             $table->integer('cash_received');
-            $table->integer('change');
+            $table->integer('change_amount');
+            $table->string('status')->default('paid');
             $table->timestamps();
             $table->softDeletes();
         });

@@ -3,6 +3,8 @@
 namespace App\Observers;
 
 use App\Models\Product;
+use App\Models\User;
+use App\Notifications\LowStockNotification;
 use Illuminate\Support\Facades\Cache;
 
 class ProductObserver
@@ -30,6 +32,14 @@ class ProductObserver
     public function updated(Product $product): void
     {
         $this->clearCache();
+
+        // Check if stock is low and send notification to admins
+        if ($product->isDirty('stock') && $product->stock <= $product->min_stock && $product->stock > 0) {
+            $admins = User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new LowStockNotification($product));
+            }
+        }
     }
 
     public function deleted(Product $product): void

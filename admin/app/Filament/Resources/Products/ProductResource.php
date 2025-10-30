@@ -18,8 +18,9 @@ class ProductResource extends Resource
     protected static ?string $model = Product::class;
 
     protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-cube';
-    protected static string | \UnitEnum | null $navigationGroup = 'Master Data';
+    protected static string| \UnitEnum|null $navigationGroup = 'Menejemen Produk';
     protected static ?string $navigationLabel = 'Produk';
+    protected static ?int $navigationSort = 1;
 
     public static function getEloquentQuery(): Builder
     {

@@ -34,7 +34,7 @@ class TransactionForm
                     ->description('Pastikan cek stok produk sebelum simpan')
                     ->columnSpanFull(),
 
-                Section::make('Informasi Pembayaran')->schema([
+                    Section::make('Informasi Pembayaran')->schema([
 
                     TextInput::make('name')
                         ->label('Nama Customer')

@@ -45,16 +45,13 @@ class SendDailyReportJob implements ShouldQueue
                 return;
             }
 
-            // Generate report message
             $message = $this->generateDailyReport($setting->top_limit);
 
-            // Send to all receivers
             $fonnteService = new FonnteService();
 
             foreach ($receivers as $receiver) {
                 $result = $fonnteService->sendMessage($receiver, $message);
 
-                // Log the result
                 NotificationLog::create([
                     'receiver' => $receiver,
                     'message' => $message,
@@ -81,7 +78,6 @@ class SendDailyReportJob implements ShouldQueue
     {
         $today = Carbon::today();
 
-        // Get today's transactions
         $transactions = Transaction::whereDate('created_at', $today)
             ->where('status', 'paid')
             ->get();
@@ -89,7 +85,6 @@ class SendDailyReportJob implements ShouldQueue
         $totalTransactions = $transactions->count();
         $totalSales = $transactions->sum('total');
 
-        // Get top selling products
         $topProducts = TransactionItem::query()
             ->whereHas('transaction', function ($query) use ($today) {
                 $query->whereDate('created_at', $today)
@@ -102,7 +97,6 @@ class SendDailyReportJob implements ShouldQueue
             ->limit($topLimit)
             ->get();
 
-        // Format message
         $message = "📊 Laporan Harian Kasir\n";
         $message .= "Total Transaksi: {$totalTransactions}\n";
         $message .= "Total Penjualan: Rp " . number_format($totalSales, 0, ',', '.') . "\n\n";
