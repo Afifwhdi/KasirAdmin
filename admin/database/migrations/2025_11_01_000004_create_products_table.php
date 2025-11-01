@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('products', function (Blueprint $table) {
@@ -16,22 +13,20 @@ return new class extends Migration
             $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->decimal('stock', 10, 2)->default(0);
-            $table->integer('min_stock')->default(0);
-            $table->integer('cost_price')->default(0);
-            $table->integer('price')->default(0);
+            $table->integer('cost_price');
+            $table->integer('price');
             $table->string('image')->nullable();
-            $table->string('sku', 191)->nullable()->unique();
-            $table->string('barcode', 191)->nullable()->unique();
-            $table->boolean('is_plu_enabled')->default(false);
+            $table->string('sku')->nullable()->unique();
+            $table->string('barcode')->nullable()->unique();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
+            $table->unsignedBigInteger('version')->default(1);
+            $table->integer('min_stock')->default(10);
+            $table->boolean('is_plu_enabled')->default(false);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('products');

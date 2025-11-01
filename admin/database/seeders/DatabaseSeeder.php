@@ -13,18 +13,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create a user with a specific role
-        \App\Models\User::factory()->create([
-            'name' => 'Owner Toko',
-            'email' => 'admin@gmail.com',
-            'password' => bcrypt('admin123')
-        ]); // you can use a more secure approach
-
         $this->call([
+            UserSeeder::class,
             SettingSeeder::class,
             CategorySeeder::class,
-            ProductSeeder::class,
-            RoleAndUserSeeder::class,
+            PaymentMethodSeeder::class,
+            ReceiptTemplateSeeder::class,
+            NotificationSettingSeeder::class,
         ]);
     }
 }
