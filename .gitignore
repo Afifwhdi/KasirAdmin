@@ -77,3 +77,8 @@ supabase_migration/
 test_*.php
 
 restore_*.php
+
+# Ignore all local VPS / setup files
+*.sh
+*.md
+!README.md
