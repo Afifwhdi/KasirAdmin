@@ -31,11 +31,11 @@ class FixTransactionDuplicate extends Command
         
         // API database connection details
         $apiDbConfig = [
-            'host' => env('API_DB_HOST', 'aws-1-ap-southeast-1.pooler.supabase.com'),
+            'host' => env('API_DB_HOST', '127.0.0.1'),
             'port' => env('API_DB_PORT', 5432),
-            'database' => env('API_DB_DATABASE', 'postgres'),
-            'username' => env('API_DB_USERNAME', 'postgres.mqqyzkzboczryilaefrm'),
-            'password' => env('API_DB_PASSWORD', 'Meong123'),
+            'database' => env('API_DB_DATABASE', 'kasir_dev'),
+            'username' => env('API_DB_USERNAME', 'postgres'),
+            'password' => env('API_DB_PASSWORD', 'root'),
         ];
         
         try {
