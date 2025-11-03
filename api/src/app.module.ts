@@ -20,9 +20,10 @@ import { AuthModule } from './auth/auth.module';
       database: process.env.DB_DATABASE,
       autoLoadEntities: true,
       synchronize: false,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      // SSL only for remote databases (Supabase), disable for local
+      ssl: process.env.DB_HOST?.includes('supabase.com') 
+        ? { rejectUnauthorized: false }
+        : false,
     }),
     ProductsModule,
     CategoriesModule,

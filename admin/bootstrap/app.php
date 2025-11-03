@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'api.token' => \App\Http\Middleware\ValidateApiToken::class,
         ]);
+
+        // Redirect unauthenticated users to Filament login
+        $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
     })
 
     ->withExceptions(function (Exceptions $exceptions) {
